@@ -1,5 +1,8 @@
 import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction } from "@remix-run/node";
+
+import styles from "./tailwind.css";
+
 import {
   Links,
   LiveReload,
@@ -8,13 +11,16 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import { cn } from "./lib/utils";
+import { PdfProvider } from "./contexts/pdf-context";
 
 export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ rel: "stylesheet", href: cssBundleHref }] : []),
+  { rel: "stylesheet", href: styles },
 ];
 
 export default function App() {
   return (
+    <PdfProvider>
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
@@ -22,12 +28,13 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className={cn("flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white")}>
         <Outlet />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
       </body>
     </html>
+    </PdfProvider>
   );
 }

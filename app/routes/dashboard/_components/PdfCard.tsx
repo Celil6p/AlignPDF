@@ -1,12 +1,22 @@
 import React, { useEffect, useState } from "react";
 
-// Assuming GetPage is an async function that takes a PdfFile and returns a URL
 import { getPage } from "app/lib/get-page";
-import { PdfFile } from "~/contexts/types/pdf";
+import { bytesToSize } from "~/lib/utils";
+import { PdfFile, PdfSubFile } from "~/contexts/types/pdf";
 import { db } from "~/contexts/db";
 import { Button } from "~/components/ui/button";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the path as necessary
 import { Input } from "~/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "~/components/ui/card";
+
+import { Label } from "@radix-ui/react-label";
+import { Trash2, XCircle } from "lucide-react";
+import SubPdfCard from "./SubPdfCard";
 
 interface PdfCardProps {
   fileName: string;
@@ -14,11 +24,20 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { removePdf, createSubFile } = usePdf();
+  const { addPdfToMergeOrder ,removePdf, createSubFile } = usePdf();
 
   /**************************************************************************************************** */
+  const [showFooter, setShowFooter] = useState(false);
 
-  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string>("");
+  // Toggle function
+  const toggleContent = () => {
+    setShowFooter(!showFooter);
+  };
+  /**************************************************************************************************** */
+
+  const [firstPageImageUrl, setFirstPageImageUrl] = useState<string>(
+    "public/placeholder-pdf-image.png"
+  );
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
 
   useEffect(() => {
@@ -50,7 +69,7 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
         // Handle the case where file.id is undefined
         console.error("Error: PDF file is missing an ID.");
         setIsLoading(false);
-        setFirstPageImageUrl(""); // Clear any existing image URL
+        setFirstPageImageUrl("public/placeholder-pdf-image.png"); // Clear any existing image URL
         // Optionally, set a state to display an error message in the UI
       }
     };
@@ -77,92 +96,125 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   }
 
   /*********************************************************************************************************************************************** */
-  function bytesToSize(bytes: number): string {
-    const sizes: string[] = ["Bytes", "KB", "MB", "GB", "TB"];
-    if (bytes === 0) return "0 Byte";
-    const i: number = parseInt(
-      Math.floor(Math.log(bytes) / Math.log(1024)).toString()
-    );
-    return Math.round(bytes / Math.pow(1024, i)) + " " + sizes[i];
-  }
 
-  const fileSize: number = file.size; // Replace file.size with your file's size in bytes
-  const readableSize: string = bytesToSize(fileSize);
+  const readableSize: string = bytesToSize(file.size);
 
   /*********************************************************************************************************************************************** */
 
+  const handleAddToMergeOrder = () => {
+    addPdfToMergeOrder('pdf', file.id as number);
+  };
+
   return (
-    <div className="p-6 border rounded-lg shadow-sm w-auto min-w-32 max-w-60 h-80 ">
-      <div className="flex items-center space-x-3">
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm font-medium text-gray-900 truncate">
-            {strippedFileName}
-          </p>
+    <div className="flex flex-row items-start justify-start w-full h-full bg-red-300 rounded-md">
+      <Card className="flex flex-col items-center transition-all duration-500 h-80 min-w-56 border-none bg-">
+        <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate  ">
+          <p>{strippedFileName}</p>
+          <div className="relative h-full w-full">
+            {showFooter && (
+              <button
+                onClick={toggleContent}
+                className="absolute top-[-15px] right-[-15px]"
+              >
+                <XCircle size={20} />
+              </button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent
+          className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
+            showFooter ? "hidden" : "block"
+          }`}
+        >
           {isLoading ? (
             <span>Loading...</span>
           ) : firstPageImageUrl ? (
             <img
-              className="h-auto w-auto overflow-clip max-w-44"
+              onClick={toggleContent}
+              className="h-auto w-auto overflow-clip max-w-44 border-4 border-red-700 rounded-lg"
               src={firstPageImageUrl}
               alt="PDF First Page"
             />
           ) : (
             <span>No image available</span> // Displayed if there's no image URL
           )}
-          <p>{readableSize}</p>
-          <div className="flex flex-row space-x-2">
+          <Button type="submit" variant={"default"} onClick={handleAddToMergeOrder}>
+                Merge
+          </Button>
+        </CardContent>
+        <div
+          className={`transition-opacity duration-500 ${
+            showFooter ? "opacity-100 visible" : "opacity-0 invisible"
+          }`}
+        >
+          <CardFooter className="relative w-full h-full">
+            <div className="flex flex-row space-x-2">
+              {/********************************************************************************************************** */}
+              {/**form sends initial and final page number of the subfile to the createSubFile function in the pdf context */}
+
+              <form
+                className="flex flex-col items-start gap-2 "
+                onSubmit={handleSubmit}
+              >
+                <Label className="text-sm font-medium text-gray-900 truncate">
+                  Split PDF pages
+                </Label>
+                <div className="flex flex-row space-x-2">
+                  <Input
+                    type="number"
+                    className=""
+                    value={initialPage}
+                    onChange={(e) => {
+                      const newInitialPage = parseInt(e.target.value, 10);
+                      if (newInitialPage >= 1 && newInitialPage <= finalPage) {
+                        setInitialPage(newInitialPage);
+                      }
+                    }}
+                    placeholder="Initial Page"
+                    required
+                  />
+                  <p>_</p>
+                  <Input
+                    type="number"
+                    className=""
+                    value={finalPage}
+                    onChange={(e) => {
+                      const newFinalPage = parseInt(e.target.value, 10);
+                      if (
+                        newFinalPage >= initialPage &&
+                        newFinalPage <= file.pages
+                      ) {
+                        setFinalPage(newFinalPage);
+                      }
+                    }}
+                    placeholder="Final Page"
+                    required
+                  />
+                </div>
+
+                {/********************************************************************************************************** */}
+                <Button type="submit" variant={"default"}>
+                  Split
+                </Button>
+                <p>{readableSize}</p>
+              </form>
+            </div>
+            {/* Additional file info can go here */}
+          </CardFooter>
+          <div className="relative h-10 w-full">
             <Button
               variant={"destructive"}
-              className={"rounded-full"}
+              className={"absolute bottom-0 right-4"}
               onClick={() => removePdf(file.id as number)}
             >
-              X
+              <Trash2 size={20} />
             </Button>
-            {/********************************************************************************************************** */}
-            {/**form sends initial and final page number of the subfile to the createSubFile function in the pdf context */}
-
-            <form className="flex flex-row space-x-2" onSubmit={handleSubmit}>
-              <Input
-                type="number"
-                className=""
-                value={initialPage}
-                onChange={(e) => {
-                  const newInitialPage = parseInt(e.target.value, 10);
-                  if (newInitialPage >= 1 && newInitialPage <= finalPage) {
-                    setInitialPage(newInitialPage);
-                  }
-                }}
-                placeholder="Initial Page"
-                required
-              />
-
-              <Input
-                type="number"
-                className=""
-                value={finalPage}
-                onChange={(e) => {
-                  const newFinalPage = parseInt(e.target.value, 10);
-                  if (
-                    newFinalPage >= initialPage &&
-                    newFinalPage <= file.pages
-                  ) {
-                    setFinalPage(newFinalPage);
-                  }
-                }}
-                placeholder="Final Page"
-                required
-              />
-
-              {/********************************************************************************************************** */}
-              <button type="submit">=</button>
-            </form>
           </div>
         </div>
-
-        <div className="flex-1 min-w-0">
-          {/* Additional file info can go here */}
-        </div>
-      </div>
+      </Card>
+      {file.subFiles.map((subFile) => (
+        <SubPdfCard key={subFile.id} subFile={subFile} parentFile={file} />
+      ))}
     </div>
   );
 };

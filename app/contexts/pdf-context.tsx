@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { PdfFile, PdfSubFile, MergeOrderItem } from "./types/pdf";
+import { PdfFile, MergeOrderItem } from "./types/pdf";
 import { db } from "./db";
 import { PDFDocument } from "pdf-lib";
 

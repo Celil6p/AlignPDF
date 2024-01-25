@@ -75,9 +75,8 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
   };
 
   return (
-    <Card className="flex flex-col items-center transition-all duration-500 h-80 min-w-56 border-none bg-">
-      <CardContent
-        className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
+    <Card className="flex flex-col items-center justify-center transition-all duration-500 h-80 min-w-56 border-none bg-">
+       <div className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
           showFooter ? "hidden" : "block"
         }`}
       >
@@ -86,7 +85,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
         ) : subPagesImageUrl ? (
           <img
             onClick={toggleContent}
-            className="h-auto w-auto overflow-clip max-w-44 border-4 border-red-700 rounded-lg"
+            className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg"
             src={subPagesImageUrl[0]}
             alt="PDF First Page"
           />
@@ -101,7 +100,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
         >
           Merge
         </Button>
-      </CardContent>
+      </div>
       <div
         className={`transition-opacity duration-500 ${
           showFooter ? "opacity-100 visible" : "opacity-0 invisible"

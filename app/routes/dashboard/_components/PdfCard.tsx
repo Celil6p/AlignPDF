@@ -24,7 +24,7 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder ,removePdf, createSubFile } = usePdf();
+  const { addPdfToMergeOrder, removePdf, createSubFile } = usePdf();
 
   /**************************************************************************************************** */
   const [showFooter, setShowFooter] = useState(false);
@@ -102,11 +102,41 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   /*********************************************************************************************************************************************** */
 
   const handleAddToMergeOrder = () => {
-    addPdfToMergeOrder('pdf', file.id as number);
+    addPdfToMergeOrder("pdf", file.id as number);
   };
 
+  /*********************************************************************************************************************************************** */
+
+  const pdfBgColors = [
+    "bg-red-300",
+    "bg-blue-300",
+    "bg-yellow-300",
+    "bg-green-300",
+    "bg-purple-300",
+    "bg-orange-300",
+    "bg-indigo-300",
+    "bg-pink-300",
+    "bg-fushcia-300",
+  ];
+
+  const pdfBorderColors = [
+    "border-red-700",
+    "border-blue-700",
+    "border-yellow-700",
+    "border-green-700",
+    "border-purple-700",
+    "border-orange-700",
+    "border-indigo-700",
+    "border-pink-700",
+    "border-fushcia-700",
+  ];
+
   return (
-    <div className="flex flex-row items-start justify-start w-full h-full bg-red-300 rounded-md">
+    <div
+      className={`flex flex-row items-start justify-start w-full h-full bg-pi ${
+        pdfBgColors[(file.id as number) % 8]
+      } rounded-md`}
+    >
       <Card className="flex flex-col items-center transition-all duration-500 h-80 min-w-56 border-none bg-">
         <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate  ">
           <p>{strippedFileName}</p>
@@ -131,15 +161,21 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
           ) : firstPageImageUrl ? (
             <img
               onClick={toggleContent}
-              className="h-auto w-auto overflow-clip max-w-44 border-4 border-red-700 rounded-lg"
+              className={`h-auto w-auto overflow-clip max-w-44 border-4 ${
+                pdfBorderColors[(file.id as number) % 8]
+              } rounded-lg`}
               src={firstPageImageUrl}
               alt="PDF First Page"
             />
           ) : (
             <span>No image available</span> // Displayed if there's no image URL
           )}
-          <Button type="submit" variant={"default"} onClick={handleAddToMergeOrder}>
-                Merge
+          <Button
+            type="submit"
+            variant={"default"}
+            onClick={handleAddToMergeOrder}
+          >
+            Merge
           </Button>
         </CardContent>
         <div

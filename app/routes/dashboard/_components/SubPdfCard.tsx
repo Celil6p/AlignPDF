@@ -75,7 +75,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
   };
 
   return (
-    <Card className="flex flex-col items-center justify-center transition-all duration-500 h-80 min-w-56 border-none bg-">
+    <Card className="flex flex-col-1 sm:flex-col-2 md:flex-col-3 lg:flex-col-4 xl:flex-col-5 items-center justify-center transition-all duration-500 h-80 min-w-56 border-none bg-">
        <div className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
           showFooter ? "hidden" : "block"
         }`}

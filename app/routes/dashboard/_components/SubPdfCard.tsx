@@ -18,7 +18,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     "public/placeholder-pdf-image.png",
   ]);
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
-  const { addPdfToMergeOrder } = usePdf()
+  const { addPdfToMergeOrder,removeSubPdf } = usePdf()
 
   useEffect(() => {
     const fetchSubPages = async () => {
@@ -62,6 +62,18 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
 
     fetchSubPages();
   }, [subFile]); // Updated dependency array
+
+  const rearrangePages = async (subFileId: number, newRange: [number, number]) => {
+    try {
+      await db.subFiles.update(subFileId, { range: newRange });
+    } catch (error) {
+      console.error("Error rearranging pages in sub PDF file:", error);
+    }
+  };
+
+
+
+  // State to toggle footer
 
   const [showFooter, setShowFooter] = useState(false);
 
@@ -107,13 +119,13 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
         }`}
       >
         <div className="relative h-10 w-full">
-          {/* <Button
+          <Button
             variant={"destructive"}
             className={"absolute bottom-0 right-4"}
-            onClick={() => removePdf(subFile.id as number)}
+            onClick={() => removeSubPdf(subFile.id as number, parentFile.id as number)}
           >
             <Trash2 size={20} />
-          </Button> */}
+          </Button> 
         </div>
       </div>
     </Card>

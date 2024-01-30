@@ -45,7 +45,7 @@ export default function Index() {
       className="flex flex-col items-center justify-center min-h-screen py-2"
     >
       <AddPdfCard />
-      <Card className="h-auto w-full p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-center items-center gap-4 mt-4">
+      {pdfFiles.length > 0 && <Card className="h-auto w-full p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-center items-center gap-4 mt-4 transition-all">
         {sortedPdfFiles.map((pdf) => (
           <div 
             key={pdf.id}
@@ -54,7 +54,7 @@ export default function Index() {
             <PdfCard fileName={pdf.file.name} file={pdf} />
           </div>
         ))}
-      </Card>
+      </Card>}
       <Button onClick={handleMerge}>Merge</Button>
       <MergeOrderList/>
     </div>

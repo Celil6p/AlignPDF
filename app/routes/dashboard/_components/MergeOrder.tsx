@@ -1,26 +1,31 @@
-import { useEffect, useState } from "react";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the import path as needed
-import { db } from "app/contexts/db"; // Adjust the import path as needed
-import { MergeOrderItem } from "app/contexts/types/pdf";
-
+import { useEffect,useState } from "react";
+import { Card, CardContent } from "~/components/ui/card";
 
 const MergeOrderList = () => {
-  const { pdfFiles } = usePdf();
-  const [mergeOrder, setMergeOrder] = useState<MergeOrderItem[]>([]);
-  useEffect(() => {
-    const fetchMergeOrder = async () => {
-      try {
-        const fetchedMergeOrder = await db.mergeOrders
-          .orderBy("order")
-          .toArray();
-        setMergeOrder(fetchedMergeOrder);
-      } catch (error) {
-        console.error("Error fetching merge order from database:", error);
-      }
-    };
+  const { pdfFiles, mergeOrder, getFirstPage } = usePdf();
 
-    fetchMergeOrder();
-  }, []);
+  const [firstPageImages, setFirstPageImages] = useState<
+    Record<number, string>
+  >({});
+
+  useEffect(() => {
+    const fetchFirstPageImages = async () => {
+      const images: Record<number, string> = {};
+
+      for (const item of mergeOrder) {
+        if (item.type === "pdf") {
+          const pdf = pdfFiles.find((pdf) => pdf.id === item.pdfId);
+          if (pdf) {
+            images[item.pdfId] = await getFirstPage(pdf);
+          }
+        }
+      }
+
+      setFirstPageImages(images);
+    };
+    fetchFirstPageImages();
+  }, [mergeOrder, pdfFiles, getFirstPage]);
 
   const getFileName = (id: number, type: "pdf" | "subPdf") => {
     if (type === "pdf") {
@@ -56,10 +61,49 @@ const MergeOrderList = () => {
           <li key={index}>
             {getFileName(item.pdfId, item.type)} (
             {item.type === "pdf" ? "Full PDF" : "Split Pages"})
+            {item.type === "pdf" && firstPageImages[item.pdfId] && (
+              <img src={firstPageImages[item.pdfId]} alt="First Page" />
+            )}
           </li>
         ))}
       </ul>
     </div>
+    // <>
+    //   {mergeOrder.length > 0 && (
+    //     <Card className="h-auto w-full p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-center items-center gap-4 mt-4 transition-all">
+    //       {mergeOrder.map((item, index) => (
+    //       <div>
+    //       <h2 key={index}>
+    //         {getFileName(item.pdfId, item.type)} (
+    //         {item.type === "pdf" ? "Full PDF" : "Split Pages"})
+    //       </h2>
+    //       <CardContent
+    //       className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
+    //         showFooter ? "hidden" : "block"
+    //       }`}
+    //     >
+    //       {/* Main Pdf border colors selected via id numbers*/}
+
+    //       {isLoading ? (
+    //         <span>Loading...</span>
+    //       ) : firstPageImageUrl ? (
+    //         <img
+    //           className={`h-auto w-auto overflow-clip max-w-44 border-4 ${
+    //             pdfBorderColors[(file.id as number) % 8]
+    //           } rounded-lg`}
+    //           src={firstPageImageUrl}
+    //           alt="PDF First Page"
+    //         />
+    //       ) : (
+    //         <span>No image available</span> // Displayed if there's no image URL
+    //       )}
+    //       </CardContent>
+    //       </div>
+    //     ))}
+
+    //     </Card>
+    //   )}
+    // </>
   );
 };
 

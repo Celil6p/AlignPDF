@@ -5,9 +5,11 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
+import placeholder from "public/placeholder-pdf-image.png";
 import { PdfFile, MergeOrderItem } from "./types/pdf";
 import { db } from "./db";
 import { PDFDocument } from "pdf-lib";
+import { getPage } from "~/lib/get-page";
 
 interface PdfProviderProps {
   children: React.ReactNode;
@@ -21,6 +23,8 @@ type PdfContextType = {
   mergePdfs: () => Promise<Blob | null>; // Returns a new merged PDF
   removePdf: (pdfId: number) => void;
   addPdfToMergeOrder: (type: "pdf" | "subPdf", pdfId: number) => void;
+  removeSubPdf: (subFileId: number, parentPdfId: number) => Promise<void>;
+  getFirstPage: (pdf: PdfFile) => Promise<string>;
 };
 
 const PdfContext = createContext<PdfContextType | undefined>(undefined);
@@ -117,6 +121,29 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
 
   /*************************************************************************************************************************************** */
 
+  const getFirstPage = async (pdf: PdfFile): Promise<string> => {
+    if (!pdf.id) {
+      console.error("Error: PDF file is missing an ID.");
+      return placeholder;
+    }
+
+    try {
+      // Check if the image URL is already stored in Dexie
+      const storedImage = await db.firstPageImages.get(pdf.id);
+      if (storedImage) {
+        return storedImage.imageUrl;
+      }
+
+      // Fetch the first page and store the new image URL in Dexie
+      const url = await getPage(pdf, 1);
+      await db.firstPageImages.add({ pdfId: pdf.id, imageUrl: url });
+      return url;
+    } catch (error) {
+      console.error("Error fetching first page of PDF", error);
+      return placeholder;
+    }
+  };
+
   const mergePdfs = useCallback(async (): Promise<Blob | null> => {
     try {
       const mergedPdfDoc = await PDFDocument.create();
@@ -174,7 +201,6 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
   const removePdf = useCallback(
     async (pdfId: number) => {
       try {
-        
         // Remove the Sub-PDFs from the merge order
         const subFiles = await db.subFiles
           .where({ parentPdfId: pdfId })
@@ -200,10 +226,6 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         // Remove subPdfImages
         await db.subFileImages.where({ parentPdfId: pdfId }).delete();
 
-       
-
-        
-
         // Update the local state to remove the PDF
         setPdfFiles((prevPdfFiles) =>
           prevPdfFiles.filter((pdf) => pdf.id !== pdfId)
@@ -216,7 +238,55 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     [pdfFiles, setPdfFiles]
   );
 
+  const removeSubPdf = useCallback(
+    async (subFileId: number, parentPdfId: number) => {
+      try {
+        // Remove the subfile from IndexedDB
+        await db.subFiles.delete(subFileId);
+        await db.mergeOrders
+          .where({ type: "subPdf", pdfId: subFileId })
+          .delete();
+        await db.subFileImages.delete(subFileId);
+
+        // Update the corresponding entry in IndexedDB
+        const parentPdf = await db.pdfFiles.get(parentPdfId);
+        if (parentPdf && parentPdf.subFiles) {
+          const updatedSubFiles = parentPdf.subFiles.filter(
+            (subFile) => subFile.id !== subFileId
+          );
+          await db.pdfFiles.update(parentPdfId, { subFiles: updatedSubFiles });
+
+          // Update the pdfFiles state
+          setPdfFiles((prevPdfFiles) => {
+            return prevPdfFiles.map((pdf) => {
+              if (pdf.id === parentPdfId) {
+                return { ...pdf, subFiles: updatedSubFiles };
+              }
+              return pdf;
+            });
+          });
+        }
+      } catch (error) {
+        console.error("Error removing sub PDF file:", error);
+      }
+    },
+    [setPdfFiles]
+  );
+
   /*************************************************************************************************************************************** */
+
+  const fetchAndUpdateMergeOrder = useCallback(async () => {
+    try {
+      const fetchedMergeOrder = await db.mergeOrders.orderBy("order").toArray();
+      setMergeOrder(fetchedMergeOrder);
+    } catch (error) {
+      console.error("Error fetching merge order:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAndUpdateMergeOrder();
+  }, [fetchAndUpdateMergeOrder]);
 
   const addPdfToMergeOrder = useCallback(
     async (type: "pdf" | "subPdf", pdfId: number) => {
@@ -229,13 +299,15 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         };
         await db.mergeOrders.add(newOrderItem);
         setMergeOrder((prev) => [...prev, newOrderItem]);
+        await fetchAndUpdateMergeOrder();
       } catch (error) {
         console.error("Error adding to merge order:", error);
         // Handle the error appropriately
       }
     },
-    [mergeOrder, setMergeOrder]
+    [fetchAndUpdateMergeOrder]
   );
+
   /*************************************************************************************************************************************** */
 
   // Render the PdfProvider with the children components
@@ -249,6 +321,8 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         mergePdfs,
         removePdf,
         addPdfToMergeOrder,
+        removeSubPdf,
+        getFirstPage,
       }}
     >
       {children}

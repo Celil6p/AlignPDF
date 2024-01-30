@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import { getPage } from "app/lib/get-page";
 import { bytesToSize } from "~/lib/utils";
-import { PdfFile, PdfSubFile } from "~/contexts/types/pdf";
+import { PdfFile } from "~/contexts/types/pdf";
 import { db } from "~/contexts/db";
 import { Button } from "~/components/ui/button";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the path as necessary
@@ -24,8 +24,9 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder, removePdf, createSubFile } = usePdf();
+  const { addPdfToMergeOrder, removePdf, createSubFile, getFirstPage } = usePdf();
 
+  //Displays page splitting menu
   /**************************************************************************************************** */
   const [showFooter, setShowFooter] = useState(false);
 
@@ -33,6 +34,8 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   const toggleContent = () => {
     setShowFooter(!showFooter);
   };
+
+  // Get first page of main pdf file
   /**************************************************************************************************** */
 
   const [firstPageImageUrl, setFirstPageImageUrl] = useState<string>(
@@ -40,44 +43,57 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
 
+  // useEffect(() => {
+  //   const fetchFirstPage = async () => {
+  //     setIsLoading(true);
+
+  //     // Ensure file.id is defined
+  //     if (file && typeof file.id === "number") {
+  //       // Check if the image URL is already stored in Dexie
+  //       const storedImage = await db.firstPageImages.get(file.id);
+  //       if (storedImage) {
+  //         setFirstPageImageUrl(storedImage.imageUrl);
+  //         setIsLoading(false);
+  //         return;
+  //       }
+
+  //       try {
+  //         const url = await getPage(file, 1);
+  //         setFirstPageImageUrl(url);
+  //         setIsLoading(false);
+
+  //         // Store the new image URL in Dexie
+  //         await db.firstPageImages.add({ pdfId: file.id, imageUrl: url });
+  //       } catch (error) {
+  //         console.error("Error fetching first page of PDF", error);
+  //         setIsLoading(false);
+  //       }
+  //     } else {
+  //       // Handle the case where file.id is undefined
+  //       console.error("Error: PDF file is missing an ID.");
+  //       setIsLoading(false);
+  //       setFirstPageImageUrl("public/placeholder-pdf-image.png"); // Clear any existing image URL
+  //       // Optionally, set a state to display an error message in the UI
+  //     }
+  //   };
+
+  //   fetchFirstPage();
+  // }, [file]);
+
   useEffect(() => {
-    const fetchFirstPage = async () => {
+    const fetchFirstPageImage = async () => {
       setIsLoading(true);
-
-      // Ensure file.id is defined
-      if (file && typeof file.id === "number") {
-        // Check if the image URL is already stored in Dexie
-        const storedImage = await db.firstPageImages.get(file.id);
-        if (storedImage) {
-          setFirstPageImageUrl(storedImage.imageUrl);
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          const url = await getPage(file, 1);
-          setFirstPageImageUrl(url);
-          setIsLoading(false);
-
-          // Store the new image URL in Dexie
-          await db.firstPageImages.add({ pdfId: file.id, imageUrl: url });
-        } catch (error) {
-          console.error("Error fetching first page of PDF", error);
-          setIsLoading(false);
-        }
-      } else {
-        // Handle the case where file.id is undefined
-        console.error("Error: PDF file is missing an ID.");
-        setIsLoading(false);
-        setFirstPageImageUrl("public/placeholder-pdf-image.png"); // Clear any existing image URL
-        // Optionally, set a state to display an error message in the UI
-      }
+      const imageUrl = await getFirstPage(file);
+      setFirstPageImageUrl(imageUrl);
+      setIsLoading(false);
     };
 
-    fetchFirstPage();
-  }, [file]);
+    fetchFirstPageImage();
+  }, [file, getFirstPage]);
 
-  /*********************************************************************************************************************************************** */
+
+
+  //Create a sub file between selected pages
 
   const [initialPage, setInitialPage] = useState<number>(1);
   const [finalPage, setFinalPage] = useState<number>(file.pages);
@@ -88,23 +104,26 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
     createSubFile(file.id as number, [initialPage, finalPage]);
   };
 
+  // Pdf title shortener
   /*********************************************************************************************************************************************** */
 
   let strippedFileName = fileName.substring(0, fileName.lastIndexOf("."));
   if (strippedFileName.length > 23) {
     strippedFileName = strippedFileName.substring(0, 20) + "...";
   }
-
+  // Pdf size human readable
   /*********************************************************************************************************************************************** */
 
   const readableSize: string = bytesToSize(file.size);
 
+  // Main pdf file merge order
   /*********************************************************************************************************************************************** */
 
   const handleAddToMergeOrder = () => {
     addPdfToMergeOrder("pdf", file.id as number);
   };
 
+  // Main pdf border and background color arrays
   /*********************************************************************************************************************************************** */
 
   const pdfBgColors = [
@@ -133,13 +152,17 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
 
   return (
     <div
-      className={`flex flex-row items-start justify-start w-full h-full bg-pi ${
+      className={`flex flex-row items-start justify-start w-full h-full bg-  ${
         pdfBgColors[(file.id as number) % 8]
       } rounded-md`}
     >
+      {/* Main Pdf background colors selected via id numbers on top line*/}
       <Card className="flex flex-col items-center transition-all duration-500 h-80 min-w-56 border-none bg-">
         <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate  ">
           <p>{strippedFileName}</p>
+
+          {/* Pdf splitting menu */}
+          {/*********************************************************************************************************************** */}
           <div className="relative h-full w-full">
             {showFooter && (
               <button
@@ -150,12 +173,15 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
               </button>
             )}
           </div>
+          {/*********************************************************************************************************************** */}
         </CardHeader>
         <CardContent
           className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
             showFooter ? "hidden" : "block"
           }`}
         >
+          {/* Main Pdf border colors selected via id numbers*/}
+
           {isLoading ? (
             <span>Loading...</span>
           ) : firstPageImageUrl ? (

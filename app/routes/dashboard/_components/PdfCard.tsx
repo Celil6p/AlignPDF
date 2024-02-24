@@ -15,7 +15,7 @@ import {
 } from "~/components/ui/card";
 
 import { Label } from "@radix-ui/react-label";
-import { Trash2, XCircle } from "lucide-react";
+import { Loader2, Trash2, XCircle } from "lucide-react";
 import SubPdfCard from "./SubPdfCard";
 
 interface PdfCardProps {
@@ -24,7 +24,8 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder, removePdf, createSubFile, getFirstPage } = usePdf();
+  const { addPdfToMergeOrder, removePdf, createSubFile, getFirstPage } =
+    usePdf();
 
   //Displays page splitting menu
   /**************************************************************************************************** */
@@ -91,8 +92,6 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
     fetchFirstPageImage();
   }, [file, getFirstPage]);
 
-
-
   //Create a sub file between selected pages
 
   const [initialPage, setInitialPage] = useState<number>(1);
@@ -150,9 +149,21 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
     "border-fushcia-700",
   ];
 
+  const loaderColors = [
+    "text-red-700",
+    "text-blue-700",
+    "text-yellow-700",
+    "text-green-700",
+    "text-purple-700",
+    "text-orange-700",
+    "text-indigo-700",
+    "text-pink-700",
+    "text-fushcia-700",
+  ];
+
   return (
     <div
-      className={`flex flex-row items-start justify-start w-full h-full bg-  ${
+      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start justify-start w-full h-full bg-  ${
         pdfBgColors[(file.id as number) % 8]
       } rounded-md`}
     >
@@ -183,7 +194,13 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
           {/* Main Pdf border colors selected via id numbers*/}
 
           {isLoading ? (
-            <span>Loading...</span>
+            <Loader2
+              className={`animate-spin ${
+                loaderColors[(file.id as number) % 8]
+              }`}
+              size={40}
+              strokeWidth={2.25}
+            />
           ) : firstPageImageUrl ? (
             <img
               onClick={toggleContent}

@@ -1,4 +1,3 @@
-// get-first-page.ts
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Import the PdfFile type from your types file

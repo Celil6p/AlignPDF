@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter } from "~/components/ui/card";
@@ -18,7 +18,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     "public/placeholder-pdf-image.png",
   ]);
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
-  const { addPdfToMergeOrder,removeSubPdf } = usePdf()
+  const { addPdfToMergeOrder, removeSubPdf } = usePdf();
 
   useEffect(() => {
     const fetchSubPages = async () => {
@@ -63,15 +63,16 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     fetchSubPages();
   }, [subFile]); // Updated dependency array
 
-  const rearrangePages = async (subFileId: number, newRange: [number, number]) => {
+  const rearrangePages = async (
+    subFileId: number,
+    newRange: [number, number]
+  ) => {
     try {
       await db.subFiles.update(subFileId, { range: newRange });
     } catch (error) {
       console.error("Error rearranging pages in sub PDF file:", error);
     }
   };
-
-
 
   // State to toggle footer
 
@@ -83,17 +84,38 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
   };
 
   const handleAddToMergeOrder = () => {
-    addPdfToMergeOrder('subPdf', subFile.id as number);
+    addPdfToMergeOrder("subPdf", subFile.id as number);
   };
+
+  const loaderColors = [
+    "text-red-700",
+    "text-blue-700",
+    "text-yellow-700",
+    "text-green-700",
+    "text-purple-700",
+    "text-orange-700",
+    "text-indigo-700",
+    "text-pink-700",
+    "text-fushcia-700",
+  ];
 
   return (
     <Card className="flex flex-col-1 sm:flex-col-2 md:flex-col-3 lg:flex-col-4 xl:flex-col-5 items-center justify-center transition-all duration-500 h-80 min-w-56 border-none bg-">
-       <div className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
+      <div
+        className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
           showFooter ? "hidden" : "block"
         }`}
       >
         {isLoading ? (
-          <span>Loading...</span>
+          <div>
+          <Loader2
+            className={`animate-spin ${
+              loaderColors[(parentFile.id as number) % 8]
+            }`
+          }
+            size={40}
+            strokeWidth={2.25}
+          /></div>
         ) : subPagesImageUrl ? (
           <img
             onClick={toggleContent}
@@ -122,10 +144,12 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
           <Button
             variant={"destructive"}
             className={"absolute bottom-0 right-4"}
-            onClick={() => removeSubPdf(subFile.id as number, parentFile.id as number)}
+            onClick={() =>
+              removeSubPdf(subFile.id as number, parentFile.id as number)
+            }
           >
             <Trash2 size={20} />
-          </Button> 
+          </Button>
         </div>
       </div>
     </Card>

@@ -136,7 +136,7 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
 
       // Fetch the first page and store the new image URL in Dexie
       const url = await getPage(pdf, 1);
-      await db.firstPageImages.add({ pdfId: pdf.id, imageUrl: url });
+      await db.firstPageImages.put({ pdfId: pdf.id, imageUrl: url });
       return url;
     } catch (error) {
       console.error("Error fetching first page of PDF", error);

@@ -10,9 +10,6 @@ interface PdfSubFileTable extends PdfSubFile {
   id?: number;
 }
 
-// New interface for first page images
-
-
 
 // Extend Dexie with your table types
 class PdfDatabase extends Dexie {

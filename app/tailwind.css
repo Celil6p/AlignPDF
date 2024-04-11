@@ -74,3 +74,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.5s ease forwards;
+}
+
+

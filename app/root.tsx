@@ -28,11 +28,13 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className={cn("flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-white")}>
+      <body className={cn("flex-grow py-8 bg-white")}>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-[1400px]">
         <Outlet />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        </div>
       </body>
     </html>
     </PdfProvider>

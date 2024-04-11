@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 
-import { getPage } from "app/lib/get-page";
 import { bytesToSize } from "~/lib/utils";
 import { PdfFile } from "~/contexts/types/pdf";
-import { db } from "~/contexts/db";
 import { Button } from "~/components/ui/button";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the path as necessary
 import { Input } from "~/components/ui/input";
@@ -15,8 +13,15 @@ import {
 } from "~/components/ui/card";
 
 import { Label } from "@radix-ui/react-label";
-import { Loader2, Trash2, XCircle } from "lucide-react";
+import {
+  Combine,
+  Loader2,
+  SplitSquareHorizontal,
+  Trash2,
+  XCircle,
+} from "lucide-react";
 import SubPdfCard from "./SubPdfCard";
+import SplitDialog from "./SplitDialog";
 
 interface PdfCardProps {
   fileName: string;
@@ -44,43 +49,6 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   );
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
 
-  // useEffect(() => {
-  //   const fetchFirstPage = async () => {
-  //     setIsLoading(true);
-
-  //     // Ensure file.id is defined
-  //     if (file && typeof file.id === "number") {
-  //       // Check if the image URL is already stored in Dexie
-  //       const storedImage = await db.firstPageImages.get(file.id);
-  //       if (storedImage) {
-  //         setFirstPageImageUrl(storedImage.imageUrl);
-  //         setIsLoading(false);
-  //         return;
-  //       }
-
-  //       try {
-  //         const url = await getPage(file, 1);
-  //         setFirstPageImageUrl(url);
-  //         setIsLoading(false);
-
-  //         // Store the new image URL in Dexie
-  //         await db.firstPageImages.add({ pdfId: file.id, imageUrl: url });
-  //       } catch (error) {
-  //         console.error("Error fetching first page of PDF", error);
-  //         setIsLoading(false);
-  //       }
-  //     } else {
-  //       // Handle the case where file.id is undefined
-  //       console.error("Error: PDF file is missing an ID.");
-  //       setIsLoading(false);
-  //       setFirstPageImageUrl("public/placeholder-pdf-image.png"); // Clear any existing image URL
-  //       // Optionally, set a state to display an error message in the UI
-  //     }
-  //   };
-
-  //   fetchFirstPage();
-  // }, [file]);
-
   useEffect(() => {
     const fetchFirstPageImage = async () => {
       setIsLoading(true);
@@ -103,13 +71,11 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
     createSubFile(file.id as number, [initialPage, finalPage]);
   };
 
-  // Pdf title shortener
-  /*********************************************************************************************************************************************** */
+  const handleRangeChange = (lower: number, upper: number) => {
+    setInitialPage(lower);
+    setFinalPage(upper);
+  };
 
-  let strippedFileName = fileName.substring(0, fileName.lastIndexOf("."));
-  if (strippedFileName.length > 23) {
-    strippedFileName = strippedFileName.substring(0, 20) + "...";
-  }
   // Pdf size human readable
   /*********************************************************************************************************************************************** */
 
@@ -163,18 +129,22 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
 
   return (
     <div
-      className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start justify-start w-full h-full bg-  ${
+      className={`${
+        file.subFiles.length > 0
+          ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+          : ""
+      } items-start justify-start w-full h-full bg-  ${
         pdfBgColors[(file.id as number) % 8]
       } rounded-md`}
     >
       {/* Main Pdf background colors selected via id numbers on top line*/}
       <Card className="flex flex-col items-center transition-all duration-500 h-80 min-w-56 border-none bg-">
-        <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate  ">
-          <p>{strippedFileName}</p>
+        <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate">
+          <p className="truncate w-full">{fileName}</p>
 
           {/* Pdf splitting menu */}
           {/*********************************************************************************************************************** */}
-          <div className="relative h-full w-full">
+          <div className="relative w-1/5">
             {showFooter && (
               <button
                 onClick={toggleContent}
@@ -187,39 +157,55 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
           {/*********************************************************************************************************************** */}
         </CardHeader>
         <CardContent
-          className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
-            showFooter ? "hidden" : "block"
-          }`}
+          className={`relative flex items-center justify-center flex-col h-full transition-all duration-500`}
         >
           {/* Main Pdf border colors selected via id numbers*/}
-
-          {isLoading ? (
-            <Loader2
-              className={`animate-spin ${
-                loaderColors[(file.id as number) % 8]
-              }`}
-              size={40}
-              strokeWidth={2.25}
-            />
-          ) : firstPageImageUrl ? (
-            <img
-              onClick={toggleContent}
-              className={`h-auto w-auto overflow-clip max-w-44 border-4 ${
-                pdfBorderColors[(file.id as number) % 8]
-              } rounded-lg`}
-              src={firstPageImageUrl}
-              alt="PDF First Page"
-            />
-          ) : (
-            <span>No image available</span> // Displayed if there's no image URL
-          )}
-          <Button
-            type="submit"
-            variant={"default"}
-            onClick={handleAddToMergeOrder}
-          >
-            Merge
-          </Button>
+          <div className="relative flex justify-center">
+            {isLoading ? (
+              <Loader2
+                className={`animate-spin ${
+                  loaderColors[(file.id as number) % 8]
+                }`}
+                size={40}
+                strokeWidth={2.25}
+              />
+            ) : firstPageImageUrl ? (
+              <img
+                onClick={toggleContent}
+                className={`h-auto w-auto overflow-clip max-w-48 max-h-64 border-4 ${
+                  pdfBorderColors[(file.id as number) % 8]
+                } rounded-lg`}
+                src={firstPageImageUrl}
+                alt="PDF First Page"
+              />
+            ) : (
+              <span>No image available</span> // Displayed if there's no image URL
+            )}
+            {showFooter && (
+              <div
+                className={`absolute flex space-x-2 justify-center items-center${showFooter} top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2`}
+              >
+                <Button
+                  className="animate-scaleUp"
+                  onClick={handleAddToMergeOrder}
+                >
+                  <Combine size={20} />
+                </Button>
+                <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
+                  <Button className="animate-scaleUp bg-blue-700 hover:bg-blue-800">
+                    <SplitSquareHorizontal size={20} />
+                  </Button>
+                </SplitDialog>
+                <Button
+                  variant={"destructive"}
+                  className="animate-scaleUp"
+                  onClick={() => removePdf(file.id as number)}
+                >
+                  <Trash2 size={20} />
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
         <div
           className={`transition-opacity duration-500 ${
@@ -280,15 +266,7 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
             </div>
             {/* Additional file info can go here */}
           </CardFooter>
-          <div className="relative h-10 w-full">
-            <Button
-              variant={"destructive"}
-              className={"absolute bottom-0 right-4"}
-              onClick={() => removePdf(file.id as number)}
-            >
-              <Trash2 size={20} />
-            </Button>
-          </div>
+          <div className="relative h-10 w-full"></div>
         </div>
       </Card>
       {file.subFiles.map((subFile) => (

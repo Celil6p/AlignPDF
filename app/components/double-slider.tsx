@@ -21,7 +21,7 @@ const DoubleRangeSlider: React.FC<DoubleRangeSliderProps> = ({ min, max, step = 
   const [lastPageUrl, setLastPageUrl] = useState('')
   const { createSubFile } = usePdf();
 
-  const handleChange = (event: Event, newValue: number | number[]) => {
+  const handleChange = async (event: Event, newValue: number | number[]) => {
     // Handle changes with the assumption that newValue is always an array for our component
     let newValues: [number, number] = Array.isArray(newValue) ? [newValue[0], newValue[1]] : [newValue, newValue];
     

@@ -23,12 +23,10 @@ const SplitDialog = (props: Props) => {
 
   const handleFirstPageUrlChange = (url: string) => {
     setFirstPageUrl(url);
-    console.log('First Page URL:', url);
   };
 
   const handleLastPageUrlChange = (url: string) => {
     setLastPageUrl(url);
-    console.log('Last Page URL:', url);
   };
 
   return (
@@ -36,14 +34,10 @@ const SplitDialog = (props: Props) => {
       <DialogTrigger>{props.children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
-          <DialogDescription>
-            This action cannot be undone. This will permanently delete your account
-            and remove your data from our servers.
-          </DialogDescription>
-          <div className="flex items-center justify-center">
-          {firstPageUrl && <img src={firstPageUrl} alt="First Page" className="max-w-44 max-h-96 hover:scale-x-[2.2] hover:scale-y-[2.2] hover:z-10 transform-gpu transition-transform"/>}
-          {lastPageUrl && <img src={lastPageUrl} alt="Last Page" className="max-w-44 max-h-96 hover:scale-x-[2.2] hover:scale-y-[2.2] hover:z-10 transform-gpu transition-transform"/>}
+          <DialogTitle>Please select {!lastPageUrl && <span>the</span>} page{lastPageUrl && <span>s</span>} you want to split </DialogTitle>
+          <div className="h-64 w-full flex items-center justify-center">
+          {firstPageUrl && <img src={firstPageUrl} alt="First Page" className="max-w-44 max-h-96 sm:hover:scale-x-[1.7] sm:hover:scale-y-[1.7] sm:hover:z-10 sm:hover:-translate-y-16 transform-gpu transition-transform"/>}
+          {lastPageUrl && <img src={lastPageUrl} alt="Last Page" className="max-w-44 max-h-96 sm:hover:scale-x-[1.7] sm:hover:scale-y-[1.7] sm:hover:z-10 sm:hover:-translate-y-16 transform-gpu transition-transform"/>}
           </div>
         </DialogHeader>
         <DoubleRangeSlider

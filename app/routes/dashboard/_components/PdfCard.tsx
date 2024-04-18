@@ -12,11 +12,13 @@ import {
 } from "~/components/ui/card";
 
 import {
-  Combine,
-  Loader2,
-  SplitSquareHorizontal,
-  Trash2,
-} from "lucide-react";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+
+import { Combine, Loader2, SplitSquareHorizontal, Trash2 } from "lucide-react";
 import SubPdfCard from "./SubPdfCard";
 import SplitDialog from "./SplitDialog";
 
@@ -32,7 +34,6 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   //Displays page splitting menu
   /**************************************************************************************************** */
   const [showFooter, setShowFooter] = useState(false);
-
 
   // Get first page of main pdf file
   /**************************************************************************************************** */
@@ -106,11 +107,13 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
 
   return (
     <div
-      className={`${file.subFiles.length > 0
+      className={`${
+        file.subFiles.length > 0
           ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           : ""
-        } items-start justify-start w-full h-full bg-  ${pdfBgColors[(file.id as number) % 8]
-        } rounded-md`}
+      } items-start justify-start w-full h-full bg-  ${
+        pdfBgColors[(file.id as number) % 8]
+      } rounded-md`}
     >
       {/* Main Pdf background colors selected via id numbers on top line*/}
       <Card className="flex flex-col items-center transition-all duration-500 h-[380px] min-w-56 border-none bg-">
@@ -124,15 +127,17 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
           <div className="relative flex justify-center">
             {isLoading ? (
               <Loader2
-                className={`animate-spin ${loaderColors[(file.id as number) % 8]
-                  }`}
+                className={`animate-spin ${
+                  loaderColors[(file.id as number) % 8]
+                }`}
                 size={40}
                 strokeWidth={2.25}
               />
             ) : firstPageImageUrl ? (
               <img
-                className={`h-auto w-auto overflow-clip max-w-48 max-h-64 border-4 ${pdfBorderColors[(file.id as number) % 8]
-                  } rounded-lg`}
+                className={`h-auto w-auto overflow-clip max-w-48 max-h-64 border-4 ${
+                  pdfBorderColors[(file.id as number) % 8]
+                } rounded-lg`}
                 src={firstPageImageUrl}
                 alt="PDF First Page"
               />
@@ -140,33 +145,48 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
               <span>No image available</span> // Displayed if there's no image URL
             )}
             {/* Buttons */}
-            <div
-              className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100"
-            >
-              <Button
-                className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                onClick={handleAddToMergeOrder}
-              >
-                <Combine size={20} />
-              </Button>
-              <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
-                <Button className="opacity-100 transition-colors duration-300 ease-in-out bg-blue-700 hover:bg-blue-800 group-hover:scale-100 sm:hover:scale-110 border-white border">
-                  <SplitSquareHorizontal size={20} />
+            <TooltipProvider>
+              <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+                      onClick={handleAddToMergeOrder}
+                    >
+                      <Combine size={20} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Add Merge Order</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                <TooltipTrigger>
+                <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
+                  <Button className="opacity-100 transition-colors duration-300 ease-in-out bg-blue-700 hover:bg-blue-800 group-hover:scale-100 sm:hover:scale-110 border-white border">
+                    <SplitSquareHorizontal size={20} />
+                  </Button>
+                </SplitDialog>
+                </TooltipTrigger>
+                <TooltipContent>Split Pdf</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                <TooltipTrigger>
+                <Button
+                  variant={"destructive"}
+                  className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+                  onClick={() => removePdf(file.id as number)}
+                >
+                  <Trash2 size={20} />
                 </Button>
-              </SplitDialog>
-              <Button
-                variant={"destructive"}
-                className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                onClick={() => removePdf(file.id as number)}
-              >
-                <Trash2 size={20} />
-              </Button>
-            </div>
+                </TooltipTrigger>
+                <TooltipContent>Remove Pdf</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           </div>
         </CardContent>
         <CardFooter className="flex flex-row justify-between space-x-10 items-center">
           <p>{readableSize}</p>
-          <p>{file.pages} Pages</p>
+          <p>{`${file.pages > 1 ? file.pages + " Pages" : "Single Page"}`}</p>
         </CardFooter>
       </Card>
       {file.subFiles.map((subFile) => (

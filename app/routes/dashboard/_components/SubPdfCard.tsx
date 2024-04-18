@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from "lucide-react";
+import { Combine, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter } from "~/components/ui/card";
@@ -6,6 +6,13 @@ import { db } from "~/contexts/db";
 import { usePdf } from "~/contexts/pdf-context";
 import { PdfSubFile, PdfFile } from "~/contexts/types/pdf";
 import { getPage } from "~/lib/get-page";
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 type SubPdfCardProps = {
   parentFile: PdfFile;
@@ -74,14 +81,6 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     }
   };
 
-  // State to toggle footer
-
-  const [showFooter, setShowFooter] = useState(false);
-
-  // Toggle function
-  const toggleContent = () => {
-    setShowFooter(!showFooter);
-  };
 
   const handleAddToMergeOrder = () => {
     addPdfToMergeOrder("subPdf", subFile.id as number);
@@ -100,57 +99,68 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
   ];
 
   return (
-    <Card className="flex flex-col-1 sm:flex-col-2 md:flex-col-3 lg:flex-col-4 xl:flex-col-5 items-center justify-center transition-all duration-500 h-80 min-w-56 border-none bg-">
+    <Card className="flex flex-col-1 sm:flex-col-2 md:flex-col-3 lg:flex-col-4 xl:flex-col-5 items-center justify-center transition-all duration-500 h-[380px] min-w-56 border-none bg-">
       <div
-        className={`flex items-center justify-center flex-col h-full transition-all duration-500 ${
-          showFooter ? "hidden" : "block"
-        }`}
+        className="flex items-center justify-center flex-col h-full"
       >
-        {isLoading ? (
-          <div>
-          <Loader2
-            className={`animate-spin ${
-              loaderColors[(parentFile.id as number) % 8]
-            }`
-          }
-            size={40}
-            strokeWidth={2.25}
-          /></div>
-        ) : subPagesImageUrl ? (
-          <img
-            onClick={toggleContent}
-            className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg"
-            src={subPagesImageUrl[0]}
-            alt="PDF First Page"
-          />
-        ) : (
-          <span>No image available</span> // Displayed if there's no image URL
-        )}
+        <CardContent className="relative flex justify-center">
+          {isLoading ? (
+            <div>
+              <Loader2
+                className={`animate-spin ${
+                  loaderColors[(parentFile.id as number) % 8]
+                }`}
+                size={40}
+                strokeWidth={2.25}
+              />
+            </div>
+          ) : subPagesImageUrl ? (
+            <img
+              className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg"
+              src={subPagesImageUrl[0]}
+              alt="PDF First Page"
+            />
+          ) : (
+            <span>No image available</span> // Displayed if there's no image URL
+          )}
 
-        <Button
-          type="submit"
-          variant={"default"}
-          onClick={handleAddToMergeOrder}
-        >
-          Merge
-        </Button>
-      </div>
-      <div
-        className={`transition-opacity duration-500 ${
-          showFooter ? "opacity-100 visible" : "opacity-0 invisible"
-        }`}
-      >
-        <div className="relative h-10 w-full">
-          <Button
-            variant={"destructive"}
-            className={"absolute bottom-0 right-4"}
-            onClick={() =>
-              removeSubPdf(subFile.id as number, parentFile.id as number)
-            }
-          >
-            <Trash2 size={20} />
-          </Button>
-        </div>
+          <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+            <Button
+              className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+              onClick={handleAddToMergeOrder}
+            >
+              <Combine size={20} />
+            </Button>
+            </TooltipTrigger>
+            <TooltipContent>Add Merge Order</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+            <TooltipTrigger>
+            <Button
+              variant={"destructive"}
+              className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+              onClick={() =>
+                removeSubPdf(subFile.id as number, parentFile.id as number)
+              }
+            >
+              <Trash2 size={20} />
+            </Button>
+            </TooltipTrigger>
+            <TooltipContent>Remove pdf</TooltipContent>
+            </Tooltip>
+            </TooltipProvider>
+          </div>
+        </CardContent>
+        {subFile.range[0] !== subFile.range[1] ? (
+          <p>
+            {subFile.range[0]} to {subFile.range[1]} Pages
+          </p>
+        ) : (
+          <p>Page {subFile.range[0]}</p>
+        )}
       </div>
     </Card>
   );

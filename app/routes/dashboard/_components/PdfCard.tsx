@@ -28,12 +28,8 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder, removePdf, createSubFile, getFirstPage } =
+  const { addPdfToMergeOrder, removePdf, getFirstPage } =
     usePdf();
-
-  //Displays page splitting menu
-  /**************************************************************************************************** */
-  const [showFooter, setShowFooter] = useState(false);
 
   // Get first page of main pdf file
   /**************************************************************************************************** */

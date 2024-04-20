@@ -26,7 +26,7 @@ class PdfDatabase extends Dexie {
       subFiles: "++id, parentPdfId, range",
       firstPageImages: "pdfId, imageUrl",
       subFileImages: "subPdfId, parentPdfId, imageUrls",
-      mergeOrders: "++id, type, pdfId, order"
+      mergeOrders: "++id, type, pdfId, order, parentPdfId"
        // New table schema
     });
   }

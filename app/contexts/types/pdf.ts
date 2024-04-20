@@ -29,4 +29,5 @@ export interface MergeOrderItem {
   type: 'pdf' | 'subPdf'; // Discriminator between PDF and sub-PDF
   pdfId: number; // ID of the PDF or sub-PDF
   order: number; // Order in which the PDFs should be merged
+  parentPdfId?: number;
 }

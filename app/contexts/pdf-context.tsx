@@ -25,6 +25,7 @@ type PdfContextType = {
   addPdfToMergeOrder: (type: "pdf" | "subPdf", pdfId: number) => void;
   removeSubPdf: (subFileId: number, parentPdfId: number) => Promise<void>;
   getFirstPage: (pdf: PdfFile) => Promise<string>;
+  updateMergeOrder: (newMergeOrder: MergeOrderItem[]) => void; // Add this line
 };
 
 const PdfContext = createContext<PdfContextType | undefined>(undefined);
@@ -110,8 +111,6 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
           // Update the parent PDF file in the Dexie database to include the new subfile ID
           db.pdfFiles.update(pdfId, { subFiles: updatedPdf.subFiles });
 
-          // Update subfile image storage
-
           return newPdfFiles;
         });
       }
@@ -143,6 +142,9 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
       return placeholder;
     }
   };
+
+    /*************************************************************************************************************************************** */
+
 
   const mergePdfs = useCallback(async (): Promise<Blob | null> => {
     try {
@@ -238,6 +240,9 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     [pdfFiles, setPdfFiles]
   );
 
+    /*************************************************************************************************************************************** */
+
+
   const removeSubPdf = useCallback(
     async (subFileId: number, parentPdfId: number) => {
       try {
@@ -292,11 +297,29 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     async (type: "pdf" | "subPdf", pdfId: number) => {
       try {
         const currentOrderCount = await db.mergeOrders.count();
-        const newOrderItem = {
-          type: type,
-          pdfId: pdfId,
-          order: currentOrderCount,
-        };
+        let newOrderItem: MergeOrderItem;
+  
+        if (type === "pdf") {
+          newOrderItem = {
+            type: type,
+            pdfId: pdfId,
+            order: currentOrderCount,
+          };
+        } else {
+          // Retrieve the subfile from the database to get the parentPdfId
+          const subFile = await db.subFiles.get(pdfId);
+          if (!subFile) {
+            throw new Error(`Subfile with ID ${pdfId} not found`);
+          }
+  
+          newOrderItem = {
+            type: type,
+            pdfId: pdfId,
+            order: currentOrderCount,
+            parentPdfId: subFile.parentPdfId, // Include the parentPdfId
+          };
+        }
+  
         await db.mergeOrders.add(newOrderItem);
         setMergeOrder((prev) => [...prev, newOrderItem]);
         await fetchAndUpdateMergeOrder();
@@ -309,6 +332,25 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
   );
 
   /*************************************************************************************************************************************** */
+
+
+  const updateMergeOrder = useCallback(async (newMergeOrder: MergeOrderItem[]) => {
+    try {
+      // Clear the existing merge order in IndexedDB
+      await db.mergeOrders.clear();
+
+      // Add the new merge order items to IndexedDB
+      await db.mergeOrders.bulkAdd(newMergeOrder);
+
+      // Update the state with the new merge order
+      setMergeOrder(newMergeOrder);
+    } catch (error) {
+      console.error("Error updating merge order:", error);
+    }
+  }, []);
+
+  /*************************************************************************************************************************************** */
+
 
   // Render the PdfProvider with the children components
   return (
@@ -323,6 +365,7 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         addPdfToMergeOrder,
         removeSubPdf,
         getFirstPage,
+        updateMergeOrder,
       }}
     >
       {children}

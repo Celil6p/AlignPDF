@@ -3,7 +3,6 @@ import AddPdfCard from "./dashboard/_components/AddPdfCard";
 import PdfCard from "./dashboard/_components/PdfCard";
 import { usePdf } from "app/contexts/pdf-context";
 import { Card } from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
 import MergeOrderList from "./dashboard/_components/MergeOrder";
 
 export const meta: MetaFunction = () => {
@@ -16,24 +15,6 @@ export const meta: MetaFunction = () => {
 export default function Index() {
   const { pdfFiles, mergePdfs } = usePdf();
 
-  async function handleMerge() {
-    try {
-      const mergedBlob = await mergePdfs();
-      if (mergedBlob) {
-        const url = URL.createObjectURL(mergedBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'merged.pdf'; // Name of the downloaded file
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url); // Clean up to release memory
-      }
-    } catch (error) {
-      console.error('Error during PDF merge:', error);
-      // Handle the error appropriately
-    }
-  }
   const sortedPdfFiles = [...pdfFiles].sort((a, b) => {
     if (a.subFiles && a.subFiles.length > 0) return -1;
     if (b.subFiles && b.subFiles.length > 0) return 1;
@@ -55,7 +36,6 @@ export default function Index() {
           </div>
         ))}
       </Card>}
-      <Button onClick={handleMerge}>Merge</Button>
       <MergeOrderList/>
     </div>
   );

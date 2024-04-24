@@ -9,7 +9,7 @@ import { PdfFile } from 'app/contexts/types/pdf';
  * @returns Promise that resolves to a string (data URL of the first page).
  */
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.1.392/pdf.worker.mjs';
 export async function getPage(pdfFile: PdfFile, pageNumber: number): Promise<string> {
     try {
         const fileReader = new FileReader();

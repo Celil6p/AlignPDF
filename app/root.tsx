@@ -1,4 +1,3 @@
-import { cssBundleHref } from "@remix-run/css-bundle";
 import type { LinksFunction } from "@remix-run/node";
 
 import styles from "./tailwind.css";
@@ -13,6 +12,8 @@ import {
 } from "@remix-run/react";
 import { cn } from "./lib/utils";
 import { PdfProvider } from "./contexts/pdf-context";
+import { Toaster } from "~/components/ui/sonner"
+
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: styles },
@@ -34,8 +35,10 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        <Toaster/>
         </div>
       </body>
+      
     </html>
     </PdfProvider>
   );

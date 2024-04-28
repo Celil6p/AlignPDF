@@ -27,6 +27,7 @@
     "@remix-run/react": "^2.9.0",
     "@remix-run/serve": "^2.9.0",
     "@types/lodash": "^4.17.0",
+    "@vercel/speed-insights": "^1.0.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "isbot": "^3.8.0",

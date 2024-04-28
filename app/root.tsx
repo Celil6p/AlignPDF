@@ -1,4 +1,5 @@
 import type { LinksFunction } from "@remix-run/node";
+import { SpeedInsights } from "@vercel/speed-insights/remix"
 
 import styles from "./tailwind.css";
 
@@ -35,6 +36,7 @@ export default function App() {
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
+        <SpeedInsights />
         <Toaster/>
         </div>
       </body>

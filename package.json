@@ -34,6 +34,7 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.307.0",
     "next-themes": "^0.3.0",
+    "pdfjs-dist": "^4.1.392",
     "postcss": "^8.4.38",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

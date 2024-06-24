@@ -7,8 +7,8 @@ import MergeOrderList from "./dashboard/_components/MergeOrder";
 
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: "AlignPDF" },
+    { name: "AlignPDF, split, merge, align, remove page from all types of PDFs", content: "Welcome to AlignPDF" },
   ];
 };
 

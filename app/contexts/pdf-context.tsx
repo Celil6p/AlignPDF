@@ -268,7 +268,7 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     try {
       const currentOrderCount = await db.mergeOrders.count();
       let newOrderItem: MergeOrderItem;
-
+  
       if (type === "pdf") {
         newOrderItem = { type, pdfId, order: currentOrderCount };
       } else {
@@ -276,9 +276,14 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         if (!subFile) {
           throw new Error(`Subfile with ID ${pdfId} not found`);
         }
-        newOrderItem = { type, pdfId, order: currentOrderCount, parentPdfId: subFile.parentPdfId };
+        newOrderItem = { 
+          type: "subPdf",
+          pdfId, 
+          order: currentOrderCount, 
+          parentPdfId: subFile.parentPdfId 
+        };
       }
-
+  
       await db.mergeOrders.add(newOrderItem);
       await fetchAndUpdateMergeOrder();
     } catch (error) {
@@ -307,22 +312,27 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     setIsLoading(true);
     try {
       await db.transaction('rw', db.mergeOrders, async () => {
-        if (type === "pdf") {
-          await db.mergeOrders.where({ type, pdfId, order }).delete();
+        // Find and delete the specific merge order item
+        const itemsToDelete = await db.mergeOrders
+          .where({ type, pdfId, order })
+          .toArray();
+  
+        if (itemsToDelete.length > 0) {
+          await db.mergeOrders.bulkDelete(itemsToDelete.map(item => item.id!));
         } else {
-          const subFile = await db.subFiles.get(pdfId);
-          if (!subFile) {
-            throw new Error(`Subfile with ID ${pdfId} not found`);
-          }
-          await db.mergeOrders.where({ type, pdfId, parentPdfId: subFile.parentPdfId, order }).delete();
+          console.warn(`No matching ${type} found for pdfId: ${pdfId}, order: ${order}`);
+          return; // Exit early if no item found
         }
-
+  
+        // Reorder remaining items
         const updatedMergeOrder = await db.mergeOrders.toArray();
-        updatedMergeOrder.forEach((item, index) => {
-          item.order = index;
-        });
-        await db.mergeOrders.clear();
-        await db.mergeOrders.bulkPut(updatedMergeOrder);
+        updatedMergeOrder.sort((a, b) => a.order - b.order);
+        
+        for (let i = 0; i < updatedMergeOrder.length; i++) {
+          updatedMergeOrder[i].order = i;
+          await db.mergeOrders.update(updatedMergeOrder[i].id!, { order: i });
+        }
+  
         setMergeOrder(updatedMergeOrder);
       });
     } catch (error) {

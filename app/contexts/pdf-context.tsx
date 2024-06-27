@@ -109,29 +109,33 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
   useEffect(() => {
     return () => {
       cleanupCache();
+      // Any other cleanup logic
     };
   }, [cleanupCache]);
 
   const clearAllData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Clear all PDF files from the database
-      await db.pdfFiles.clear();
-      await db.subFiles.clear();
-      await db.mergeOrders.clear();
-      await db.firstPageImages.clear();
-      await db.subFileImages.clear();
-
+      await db.transaction('rw', db.pdfFiles, db.subFiles, db.mergeOrders, db.firstPageImages, db.subFileImages, async () => {
+        await Promise.all([
+          db.pdfFiles.clear(),
+          db.subFiles.clear(),
+          db.mergeOrders.clear(),
+          db.firstPageImages.clear(),
+          db.subFileImages.clear()
+        ]);
+      });
+  
       // Clear the state
       setPdfFiles([]);
       setMergeOrder([]);
-
+  
       // Clear the cache
       cleanupCache();
-
+  
       // Clear app cache but retain specific cookies
       await clearAppCache(['analytics_id', 'user_preferences']);
-
+  
       console.log('All data cleared successfully');
     } catch (error) {
       console.error('Error clearing data:', error);
@@ -139,14 +143,17 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
       setIsLoading(false);
     }
   }, [cleanupCache]);
-
+  
   const addPdfFile = useCallback(async (file: File) => {
     setIsLoading(true);
     try {
+      if (!db.isOpen()) {
+        await db.open();
+      }
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const numberOfPages = pdfDoc.getPageCount();
-
+  
       const newPdf = {
         title: file.name,
         file,
@@ -154,17 +161,25 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
         pages: numberOfPages,
         subFiles: [],
       };
-
+  
       const withId = await db.pdfFiles.add(newPdf);
       setPdfFiles((prev) => [...prev, { ...newPdf, id: withId }]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error processing the PDF file:", error);
-      alert("Error processing the PDF file.");
+      if (error instanceof Error) {
+        if (error.name === 'DatabaseClosedError') {
+          alert("Database is closed. Please refresh the page and try again.");
+        } else {
+          alert(`Error processing the PDF file: ${error.message}`);
+        }
+      } else {
+        alert("An unknown error occurred while processing the PDF file.");
+      }
     } finally {
       setIsLoading(false);
     }
   }, []);
-
+  
   const createSubFile = useCallback(
     async (pdfId: number, range: [number, number]): Promise<boolean> => {
       setIsLoading(true);
@@ -289,43 +304,26 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
   const removePdf = useCallback(async (pdfId: number) => {
     setIsLoading(true);
     try {
-      await db.transaction(
-        "rw",
-        db.pdfFiles,
-        db.subFiles,
-        db.mergeOrders,
-        db.firstPageImages,
-        db.subFileImages,
-        async () => {
-          const subFiles = await db.subFiles
-            .where({ parentPdfId: pdfId })
-            .toArray();
-          const subFileIds = subFiles
-            .map((subFile) => subFile.id)
-            .filter((id): id is number => id !== undefined);
+      await db.transaction('rw', db.pdfFiles, db.subFiles, db.mergeOrders, db.firstPageImages, db.subFileImages, async () => {
+        const subFiles = await db.subFiles.where({ parentPdfId: pdfId }).toArray();
+        const subFileIds = subFiles.map((subFile) => subFile.id).filter((id): id is number => id !== undefined);
   
-          await db.mergeOrders.where("pdfId").anyOf(subFileIds).delete();
-          await db.mergeOrders.where({ type: "pdf", pdfId }).delete();
-          await db.pdfFiles.delete(pdfId);
-          await db.firstPageImages.where({ pdfId }).delete();
-          await db.subFiles.where({ parentPdfId: pdfId }).delete();
-          await db.subFileImages.where({ parentPdfId: pdfId }).delete();
+        await Promise.all([
+          db.mergeOrders.where("pdfId").anyOf(subFileIds).delete(),
+          db.mergeOrders.where({ type: "pdf", pdfId }).delete(),
+          db.pdfFiles.delete(pdfId),
+          db.firstPageImages.where({ pdfId }).delete(),
+          db.subFiles.where({ parentPdfId: pdfId }).delete(),
+          db.subFileImages.where({ parentPdfId: pdfId }).delete()
+        ]);
   
-          for (const [key, url] of pageCache.current.entries()) {
-            if (key.startsWith(`${pdfId}-`)) {
-              revokeBlobUrl(url);
-              pageCache.current.delete(key);
-            }
-          }
-  
-          // Check if this was the last PDF
-          const remainingPdfsCount = await db.pdfFiles.count();
-          if (remainingPdfsCount === 0) {
-            // This was the last PDF, clear all remaining data
-            await clearAllData();
+        for (const [key, url] of pageCache.current.entries()) {
+          if (key.startsWith(`${pdfId}-`)) {
+            revokeBlobUrl(url);
+            pageCache.current.delete(key);
           }
         }
-      );
+      });
   
       setPdfFiles((prevPdfFiles) => {
         const updatedPdfFiles = prevPdfFiles.filter((pdf) => pdf.id !== pdfId);

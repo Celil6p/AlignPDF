@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { bytesToSize } from "~/lib/utils";
+import { bytesToSize } from "~/utils/bytesToSize";
 import { PdfFile } from "~/contexts/types/pdf";
 import { Button } from "~/components/ui/button";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the path as necessary
@@ -28,8 +28,7 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder, removePdf, getFirstPage } =
-    usePdf();
+  const { addPdfToMergeOrder, removePdf, getFirstPage } = usePdf();
 
   // Get first page of main pdf file
   /**************************************************************************************************** */
@@ -40,14 +39,25 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
 
   useEffect(() => {
+    let isMounted = true;
     const fetchFirstPageImage = async () => {
       setIsLoading(true);
       const imageUrl = await getFirstPage(file);
-      setFirstPageImageUrl(imageUrl);
-      setIsLoading(false);
+      if (isMounted) {
+        setFirstPageImageUrl(imageUrl);
+        setIsLoading(false);
+      }
     };
 
     fetchFirstPageImage();
+
+    return () => {
+      isMounted = false;
+      // If the imageUrl is a blob URL, revoke it
+      if (firstPageImageUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(firstPageImageUrl);
+      }
+    };
   }, [file, getFirstPage]);
 
   // Pdf size human readable
@@ -155,26 +165,26 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
                   <TooltipContent>Add Merge Order</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                <TooltipTrigger>
-                <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
-                  <Button className="opacity-100 transition-colors duration-300 ease-in-out bg-blue-700 hover:bg-blue-800 group-hover:scale-100 sm:hover:scale-110 border-white border">
-                    <SplitSquareHorizontal size={20} />
-                  </Button>
-                </SplitDialog>
-                </TooltipTrigger>
-                <TooltipContent>Split Pdf</TooltipContent>
+                  <TooltipTrigger>
+                    <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
+                      <Button className="opacity-100 transition-colors duration-300 ease-in-out bg-blue-700 hover:bg-blue-800 group-hover:scale-100 sm:hover:scale-110 border-white border">
+                        <SplitSquareHorizontal size={20} />
+                      </Button>
+                    </SplitDialog>
+                  </TooltipTrigger>
+                  <TooltipContent>Split Pdf</TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                <TooltipTrigger>
-                <Button
-                  variant={"destructive"}
-                  className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                  onClick={() => removePdf(file.id as number)}
-                >
-                  <Trash2 size={20} />
-                </Button>
-                </TooltipTrigger>
-                <TooltipContent>Remove Pdf</TooltipContent>
+                  <TooltipTrigger>
+                    <Button
+                      variant={"destructive"}
+                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+                      onClick={() => removePdf(file.id as number)}
+                    >
+                      <Trash2 size={20} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove Pdf</TooltipContent>
                 </Tooltip>
               </div>
             </TooltipProvider>

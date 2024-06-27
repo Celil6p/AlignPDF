@@ -1,50 +1,51 @@
-import * as pdfjsLib from 'pdfjs-dist';
-import { PdfFile } from 'app/contexts/types/pdf';
+import * as pdfjsLib from "pdfjs-dist";
+import { PdfFile } from "app/contexts/types/pdf";
 
-// Set the worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.mjs`;
 
-/**
- * Get a specific page of a PDF file as a data URL.
- * @param pdfFile The PDF file object.
- * @param pageNumber The page number to render (1-based index).
- * @returns Promise that resolves to a string (data URL of the specified page).
- */
-export function getPage(pdfFile: PdfFile, pageNumber: number): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        
-        fileReader.onload = async (event) => {
-            try {
-                if (!(event.target?.result instanceof ArrayBuffer)) {
-                    throw new Error('FileReader did not load an ArrayBuffer');
-                }
+export async function getPage(
+  pdfFile: PdfFile,
+  pageNumber: number
+): Promise<string> {
+  let pdfDocument: pdfjsLib.PDFDocumentProxy | null = null;
+  let canvas: HTMLCanvasElement | null = null;
 
-                const typedArray = new Uint8Array(event.target.result);
-                const pdfDocument = await pdfjsLib.getDocument(typedArray).promise;
-                const page = await pdfDocument.getPage(pageNumber);
+  try {
+    const arrayBuffer = await pdfFile.file.arrayBuffer();
+    const typedArray = new Uint8Array(arrayBuffer);
+    pdfDocument = await pdfjsLib.getDocument(typedArray).promise;
+    const page = await pdfDocument.getPage(pageNumber);
 
-                const scale = 1.5;
-                const viewport = page.getViewport({ scale });
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
+    const scale = 1.5;
+    const viewport = page.getViewport({ scale });
+    canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
 
-                if (!context) {
-                    throw new Error('Unable to get canvas context');
-                }
+    if (!context) {
+      throw new Error("Unable to get canvas context");
+    }
 
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
 
-                await page.render({ canvasContext: context, viewport }).promise;
-                resolve(canvas.toDataURL());
-            } catch (error) {
-                reject(error);
-            }
-        };
+    await page.render({ canvasContext: context, viewport }).promise;
+    return canvas.toDataURL();
+  } catch (error) {
+    console.error("Error processing PDF page:", error);
+    throw error;
+  } finally {
+    if (pdfDocument) {
+      await pdfDocument.destroy();
+    }
+    if (canvas) {
+      canvas.width = canvas.height = 0;
+      canvas = null;
+    }
+  }
+}
 
-        fileReader.onerror = (error) => reject(error);
-
-        fileReader.readAsArrayBuffer(pdfFile.file);
-    });
+export function revokeBlobUrl(url: string | undefined) {
+  if (url && url.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
 }

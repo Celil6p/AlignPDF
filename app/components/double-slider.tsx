@@ -7,11 +7,10 @@ import {
   TextField,
   IconButton,
 } from "@mui/material";
-import { Check,X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { ArrowDropUp, ArrowDropDown } from "@mui/icons-material";
 import { Button } from "./ui/button";
 import { usePdf } from "app/contexts/pdf-context";
-import { getPage } from "~/lib/get-page";
 import { PdfFile } from "~/contexts/types/pdf";
 import { toast } from "sonner";
 
@@ -37,7 +36,7 @@ const DoubleRangeSlider: React.FC<DoubleRangeSliderProps> = ({
     value[1]
   );
   const [isSinglePage, setIsSinglePage] = useState(false);
-  const { createSubFile } = usePdf();
+  const { createSubFile, getCachedPage } = usePdf();
 
   useEffect(() => {
     // Call handleChangeCommitted when the component mounts to display the first and last pages
@@ -66,8 +65,8 @@ const DoubleRangeSlider: React.FC<DoubleRangeSliderProps> = ({
     const [start, end] = Array.isArray(newValue)
       ? newValue
       : [newValue, newValue];
-    const firstUrl = await getPage(file, start);
-    const lastUrl = isSinglePage ? "" : await getPage(file, end);
+    const firstUrl = await getCachedPage(file, start);
+    const lastUrl = isSinglePage ? "" : await getCachedPage(file, end);
     onFirstPageUrlChange(firstUrl);
     onLastPageUrlChange(lastUrl);
   };
@@ -152,10 +151,10 @@ const DoubleRangeSlider: React.FC<DoubleRangeSliderProps> = ({
   const handleSplit = async () => {
     console.log(value);
     const subFileCreated = await createSubFile(file.id as number, value);
-  
+
     if (subFileCreated) {
       toast("Subfile created", {
-        icon: <Check size={24} color="green"/>,
+        icon: <Check size={24} color="green" />,
         description: `${file.title} ${
           value[0] === value[1]
             ? `page ${value[0]}`
@@ -164,7 +163,7 @@ const DoubleRangeSlider: React.FC<DoubleRangeSliderProps> = ({
       });
     } else {
       toast("Subfile already exists", {
-        icon: <X size={24} color="red"/>,
+        icon: <X size={24} color="red" />,
         description: `A subfile with the range ${value[0]} - ${value[1]} already exists for ${file.title}`,
       });
     }

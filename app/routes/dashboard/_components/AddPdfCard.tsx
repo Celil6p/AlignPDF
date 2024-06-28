@@ -2,9 +2,15 @@ import React, { useState } from "react";
 import { usePdf } from "app/contexts/pdf-context"; // Adjust the path as necessary
 import { FilePlus } from "lucide-react";
 
-const AddPdfCard: React.FC = () => {
+interface AddPdfCardProps {
+  className?: string;
+  decription?: string;
+}
+
+const AddPdfCard: React.FC<AddPdfCardProps> = ({ className = "" ,decription = ""}) => {
   const { addPdfFile } = usePdf();
   const [isDragActive, setIsDragActive] = useState(false);
+
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -51,37 +57,37 @@ const AddPdfCard: React.FC = () => {
   };
 
   return (
-    <div
-      className={`p-4 border-2 w-full h-full mx-10 ${
-        isDragActive ? "border-blue-400" : "border-gray-300"
-      } border-dashed rounded-lg cursor-pointer hover:border-gray-400`}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-    >
-      <input
-        type="file"
-        className="hidden"
-        id="pdf-upload"
-        accept="application/pdf"
-        multiple
-        onChange={handleFileSelect}
-      />
-      <label htmlFor="pdf-upload" className="text-center">
-        <div className="flex flex-col items-center justify-center">
-          <FilePlus
-            className={`w-12 h-12 mb-1${
-              isDragActive ? "text-blue-400" : "text-gray-600"
-            }`}
-            style={{ color: isDragActive ? "#60a5fa" : "#4b5563" }}
-          />
-          <p className={`${isDragActive ? "text-blue-400" : "text-gray-600"
-            }`}>
-            Drag and drop PDFs here, or click to select files
-          </p>
-        </div>
-      </label>
+    <div className={`w-full h-full ${className}`}>
+      <div
+        className={`p-4 border-2 w-full h-full ${
+          isDragActive ? "border-blue-400" : "border-gray-300"
+        } border-dashed rounded-lg cursor-pointer hover:border-gray-400 flex items-center justify-center`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+      >
+        <input
+          type="file"
+          className="hidden"
+          id="pdf-upload"
+          accept="application/pdf"
+          multiple
+          onChange={handleFileSelect}
+        />
+        <label htmlFor="pdf-upload" className="text-center cursor-pointer">
+          <div className="flex flex-col items-center justify-center">
+            <FilePlus
+              className={`w-12 h-12 mb-2 ${
+                isDragActive ? "text-blue-400" : "text-gray-600"
+              }`}
+            />
+            <p className={`text-sm ${isDragActive ? "text-blue-400" : "text-gray-600"}`}>
+              {decription}
+            </p>
+          </div>
+        </label>
+      </div>
     </div>
   );
 };

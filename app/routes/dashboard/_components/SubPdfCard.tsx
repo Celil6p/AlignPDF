@@ -30,7 +30,7 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
   useEffect(() => {
     const fetchSubPages = async () => {
       setIsLoading(true);
-
+  
       if (subFile && typeof subFile.id === "number") {
         const storedImages = await db.subFileImages.get(subFile.id);
         if (storedImages) {
@@ -38,21 +38,20 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
           setIsLoading(false);
           return;
         }
-
+  
         try {
           const initialPageUrl = await getPage(parentFile, subFile.range[0]);
           const finalPageUrl = await getPage(parentFile, subFile.range[1]);
           setSubPagesImageUrl([initialPageUrl, finalPageUrl]);
           setIsLoading(false);
-
+  
           // Update the entry or create a new one if it doesn't exist
           await db.subFileImages.put({
             imageUrls: [initialPageUrl, finalPageUrl],
             subPdfId: subFile.id,
             parentPdfId: parentFile.id,
           });
-
-          console.log("success db update");
+  
         } catch (error) {
           console.error("Error fetching pages of child PDF", error);
           setIsLoading(false);
@@ -66,10 +65,10 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
         ]);
       }
     };
-
+  
     fetchSubPages();
-  }, [subFile]); // Updated dependency array
-
+  }, [subFile, parentFile]);
+  
   const rearrangePages = async (
     subFileId: number,
     newRange: [number, number]
@@ -104,25 +103,36 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
         className="flex items-center justify-center flex-col h-full"
       >
         <CardContent className="relative flex justify-center">
-          {isLoading ? (
-            <div>
-              <Loader2
-                className={`animate-spin ${
-                  loaderColors[(parentFile.id as number) % 8]
-                }`}
-                size={40}
-                strokeWidth={2.25}
-              />
-            </div>
-          ) : subPagesImageUrl ? (
+        {isLoading ? (
+          <div>
+            <Loader2
+              className={`animate-spin ${
+                loaderColors[(parentFile.id as number) % 8]
+              }`}
+              size={40}
+              strokeWidth={2.25}
+            />
+          </div>
+        ) : subPagesImageUrl ? (
+          <div className="relative">
             <img
-              className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg"
+              className={`h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ${
+                subPagesImageUrl[0] !== subPagesImageUrl[1] ? "absolute" : ""
+              }`}
               src={subPagesImageUrl[0]}
               alt="PDF First Page"
             />
-          ) : (
-            <span>No image available</span> // Displayed if there's no image URL
-          )}
+            {subPagesImageUrl[0] !== subPagesImageUrl[1] && (
+              <img
+                className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ml-4 mt-2"
+                src={subPagesImageUrl[1]}
+                alt="PDF Last Page"
+              />
+            )}
+          </div>
+        ) : (
+          <span>No image available</span>
+        )}
 
           <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
             <TooltipProvider>

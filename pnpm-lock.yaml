@@ -18,46 +18,46 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       '@mui/icons-material':
-        specifier: ^5.15.20
+        specifier: ^5.15.15
         version: 5.15.20(@mui/material@5.15.20(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.3)(react@18.3.1)
       '@mui/material':
-        specifier: ^5.15.20
+        specifier: ^5.15.15
         version: 5.15.20(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@emotion/styled@11.11.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-dialog':
-        specifier: ^1.1.1
+        specifier: ^1.0.5
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-dropdown-menu':
-        specifier: ^2.1.1
+        specifier: ^2.0.6
         version: 2.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-label':
-        specifier: ^2.1.0
+        specifier: ^2.0.2
         version: 2.1.0(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-popover':
-        specifier: ^1.1.1
+        specifier: ^1.0.7
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-slot':
-        specifier: ^1.1.0
+        specifier: ^1.0.2
         version: 1.1.0(@types/react@18.3.3)(react@18.3.1)
       '@radix-ui/react-tooltip':
-        specifier: ^1.1.1
+        specifier: ^1.0.7
         version: 1.1.1(@types/react-dom@18.3.0)(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@remix-run/css-bundle':
-        specifier: ^2.10.0
+        specifier: ^2.9.0
         version: 2.10.0
       '@remix-run/node':
-        specifier: ^2.10.0
+        specifier: ^2.9.0
         version: 2.10.0(typescript@5.5.2)
       '@remix-run/react':
-        specifier: ^2.10.0
+        specifier: ^2.9.0
         version: 2.10.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.2)
       '@remix-run/serve':
-        specifier: ^2.10.0
+        specifier: ^2.9.0
         version: 2.10.0(typescript@5.5.2)
       '@types/lodash':
-        specifier: ^4.17.6
+        specifier: ^4.17.0
         version: 4.17.6
       '@vercel/speed-insights':
-        specifier: ^1.0.12
+        specifier: ^1.0.10
         version: 1.0.12(react@18.3.1)
       class-variance-authority:
         specifier: ^0.7.0
@@ -78,22 +78,19 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       pdfjs-dist:
-        specifier: ^4.3.136
+        specifier: ^4.1.392
         version: 4.3.136
-      pnpm:
-        specifier: ^9.4.0
-        version: 9.4.0
       postcss:
         specifier: ^8.4.38
         version: 8.4.38
       react:
-        specifier: ^18.3.1
+        specifier: ^18.2.0
         version: 18.3.1
       react-dom:
-        specifier: ^18.3.1
+        specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
       sonner:
-        specifier: ^1.5.0
+        specifier: ^1.4.41
         version: 1.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       tailwind-merge:
         specifier: ^2.3.0
@@ -106,13 +103,13 @@ importers:
         version: 0.19.0(rollup@4.18.0)(vite@5.3.2(@types/node@20.14.9))
     devDependencies:
       '@remix-run/dev':
-        specifier: ^2.10.0
+        specifier: ^2.9.0
         version: 2.10.0(@remix-run/react@2.10.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.2))(@remix-run/serve@2.10.0(typescript@5.5.2))(@types/node@20.14.9)(babel-plugin-macros@3.1.0)(typescript@5.5.2)(vite@5.3.2(@types/node@20.14.9))
       '@types/react':
-        specifier: ^18.3.3
+        specifier: ^18.2.79
         version: 18.3.3
       '@types/react-dom':
-        specifier: ^18.3.0
+        specifier: ^18.2.25
         version: 18.3.0
       '@typescript-eslint/eslint-plugin':
         specifier: ^6.21.0
@@ -136,22 +133,22 @@ importers:
         specifier: ^2.29.1
         version: 2.29.1(@typescript-eslint/parser@6.21.0(eslint@8.57.0)(typescript@5.5.2))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
       eslint-plugin-jsx-a11y:
-        specifier: ^6.9.0
+        specifier: ^6.8.0
         version: 6.9.0(eslint@8.57.0)
       eslint-plugin-react:
-        specifier: ^7.34.3
+        specifier: ^7.34.1
         version: 7.34.3(eslint@8.57.0)
       eslint-plugin-react-hooks:
-        specifier: ^4.6.2
+        specifier: ^4.6.0
         version: 4.6.2(eslint@8.57.0)
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
       tailwindcss:
-        specifier: ^3.4.4
+        specifier: ^3.4.3
         version: 3.4.4
       typescript:
-        specifier: ^5.5.2
+        specifier: ^5.4.5
         version: 5.5.2
 
 packages:
@@ -3585,11 +3582,6 @@ packages:
 
   pkg-types@1.1.1:
     resolution: {integrity: sha512-ko14TjmDuQJ14zsotODv7dBlwxKhUKQEhuhmbqo1uCi9BB0Z2alo/wAXg6q1dTR5TyuqYyWhjtfe/Tsh+X28jQ==}
-
-  pnpm@9.4.0:
-    resolution: {integrity: sha512-9Um4pSydK4U2di+ZwHIiBe/Fr5E+d4NdvMw7CwssqefcgCK3gGLBcpHEjoh0nHDOiOtadPH6jEv14Yu0bIvYOg==}
-    engines: {node: '>=18.12'}
-    hasBin: true
 
   possible-typed-array-names@1.0.0:
     resolution: {integrity: sha512-d7Uw+eZoloe0EHDIYoe+bQ5WXnGMOpmiZFTuMWCwpjzzkL2nTjcKiAk4hh8TjnGye2TwWOk3UXucZ+3rbmBa8Q==}
@@ -8628,8 +8620,6 @@ snapshots:
       confbox: 0.1.7
       mlly: 1.7.1
       pathe: 1.1.2
-
-  pnpm@9.4.0: {}
 
   possible-typed-array-names@1.0.0: {}
 

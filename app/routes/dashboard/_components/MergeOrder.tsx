@@ -1,7 +1,7 @@
 import { usePdf } from "app/contexts/pdf-context";
 import { useEffect, useState } from "react";
 import { Card } from "~/components/ui/card";
-import { db } from "~/contexts/db"; // Adjust the import path as needed
+import { db } from "~/contexts/db";
 import { Button } from "~/components/ui/button";
 import { ArrowLeft, ArrowRight, Trash2 } from "lucide-react";
 import {
@@ -11,6 +11,8 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { MergeOrderItem } from "~/contexts/types/pdf";
+import { motion, AnimatePresence } from "framer-motion";
+
 
 const MergeOrderList = () => {
   const {
@@ -29,6 +31,8 @@ const MergeOrderList = () => {
   const [subPdfImages, setSubPdfImages] = useState<
     Record<number, [string, string]>
   >({});
+
+  const [animatingItems, setAnimatingItems] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchFirstPageImages = async () => {
@@ -172,25 +176,14 @@ const MergeOrderList = () => {
     "border-fushcia-700",
   ];
 
-  const moveItemUp = (index: number) => {
-    if (index > 0) {
-      const updatedMergeOrder = [...mergeOrder];
-      const temp = updatedMergeOrder[index];
-      updatedMergeOrder[index] = updatedMergeOrder[index - 1];
-      updatedMergeOrder[index - 1] = temp;
-      updateMergeOrder(updatedMergeOrder);
-    }
-  };
-
-  const moveItemDown = (index: number) => {
-    if (index < mergeOrder.length - 1) {
-      const updatedMergeOrder = [...mergeOrder];
-      const temp = updatedMergeOrder[index];
-      updatedMergeOrder[index] = updatedMergeOrder[index + 1];
-      updatedMergeOrder[index + 1] = temp;
-      updateMergeOrder(updatedMergeOrder);
-    }
-  };
+  const moveItem = (index: number, direction: 'up' | 'down') => {
+  const newIndex = direction === 'up' ? index - 1 : index + 1;
+  if (newIndex >= 0 && newIndex < mergeOrder.length) {
+    const newOrder = [...mergeOrder];
+    [newOrder[index], newOrder[newIndex]] = [newOrder[newIndex], newOrder[index]];
+    updateMergeOrder(newOrder);
+  }
+};
 
   const getParentPdfId = (item: MergeOrderItem) => {
     if (item.type === "pdf") {
@@ -206,173 +199,180 @@ const MergeOrderList = () => {
         <>
           <Card className="p-4 border w-full h-full mx-10 my-2 flex flex-col items-center">
             <h2>Merge Order</h2>
-            <ul className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-center items-center gap-4 mt-4 min-w-56 border-none transition-all">
-              {mergeOrder.map((item, index) => {
-                const parentId = getParentPdfId(item);
-                return (
-                  <li
-                    key={index}
-                    className={`${pdfBgColors[(parentId as number) % 8]}
-                      rounded-md p-4 mb-2 shadow-md h-[380px]`}
-                  >
-                    <div className="flex flex-col space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="truncate text-sm">
-                          {getFileName(item.pdfId, item.type)}
+            <ul className="p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 justify-center items-center gap-4 mt-4 min-w-56 border-none">
+              <AnimatePresence>
+                {mergeOrder.map((item, index) => {
+                  const parentId = getParentPdfId(item);
+                  return (
+                    <motion.li
+                    key={item.id || `${item.type}-${item.pdfId}-${item.order}`}
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`${pdfBgColors[(parentId as number) % 8]}
+                        rounded-md p-4 mb-2 shadow-md h-[380px]`}
+                    >
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="truncate text-sm">
+                            {getFileName(item.pdfId, item.type)}
+                          </p>
+                        </div>
+                        <div className="flex justify-center items-center">
+                          {item.type === "pdf" && firstPageImages[item.pdfId] && (
+                            <div className="relative">
+                              <TooltipProvider>
+                                <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => moveItem(index, 'up')}
+                                        disabled={index === 0}
+                                      >
+                                        <ArrowLeft size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Move up/left</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() =>
+                                          removeMergeOrder(
+                                            item.type,
+                                            item.pdfId,
+                                            item.order
+                                          )
+                                        }
+                                      >
+                                        <Trash2 size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Remove from order
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => moveItem(index, 'down')}
+                                        disabled={index === mergeOrder.length - 1}
+                                      >
+                                        <ArrowRight size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Move down/right</TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </TooltipProvider>
+                              <img
+                                src={firstPageImages[item.pdfId]}
+                                alt="First Page"
+                                className={`h-auto w-auto object-contain max-w-48 max-h-64 border-4 ${
+                                  pdfBorderColors[(item.pdfId as number) % 8]
+                                } rounded-lg shadow-lg`}
+                              />
+                            </div>
+                          )}
+                          {item.type === "subPdf" && subPdfImages[item.pdfId] && (
+                            <div className="relative">
+                              <TooltipProvider>
+                                <div className="absolute z-10 opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => moveItem(index, 'up')}
+                                        disabled={index === 0}
+                                      >
+                                        <ArrowLeft size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Move up/left</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() =>
+                                          removeMergeOrder(
+                                            item.type,
+                                            item.pdfId,
+                                            item.order
+                                          )
+                                        }
+                                      >
+                                        <Trash2 size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      Remove from order
+                                    </TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <Button
+                                        className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => moveItem(index, 'down')}
+                                        disabled={index === mergeOrder.length - 1}
+                                      >
+                                        <ArrowRight size={20} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Move down/right</TooltipContent>
+                                  </Tooltip>
+                                </div>
+                              </TooltipProvider>
+                              <img
+                                className={`${
+                                  subPdfImages[item.pdfId][0] !==
+                                  subPdfImages[item.pdfId][1]
+                                    ? "absolute"
+                                    : " "
+                                } h-auto w-auto object-contain max-w-48 max-h-64 border-2 border-gray-300 rounded-lg shadow-lg`}
+                                src={subPdfImages[item.pdfId][0]}
+                                alt="First Page"
+                              />
+                              {subPdfImages[item.pdfId][0] !==
+                                subPdfImages[item.pdfId][1] && (
+                                <img
+                                  className="h-auto w-auto object-contain max-w-48 max-h-64 border-2 border-gray-300
+                                   rounded-lg shadow-lg ml-4 mt-2"
+                                  src={subPdfImages[item.pdfId][1]}
+                                  alt="Last Page"
+                                />
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-row mt-4 gap-4">
+                        <p>{getPageNumberAndType(item.pdfId, item.type)}</p>
+                        <p className="text-sm font-normal">
+                          ({item.type === "pdf" ? "Full PDF" : "Split Pages"})
                         </p>
                       </div>
-                      <div className="flex justify-center items-center">
-                        {item.type === "pdf" && firstPageImages[item.pdfId] && (
-                          <div className="relative">
-                            <TooltipProvider>
-                              <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => moveItemUp(index)}
-                                      disabled={index === 0}
-                                    >
-                                      <ArrowLeft size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Up order</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() =>
-                                        removeMergeOrder(
-                                          item.type,
-                                          item.pdfId,
-                                          item.order
-                                        )
-                                      }
-                                    >
-                                      <Trash2 size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    Remove from order
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => moveItemDown(index)}
-                                      disabled={index === mergeOrder.length - 1}
-                                    >
-                                      <ArrowRight size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Down order</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TooltipProvider>
-                            <img
-                              src={firstPageImages[item.pdfId]}
-                              alt="First Page"
-                              className={`h-auto w-auto object-contain max-w-48 max-h-64 border-4 ${
-                                pdfBorderColors[(item.pdfId as number) % 8]
-                              } rounded-lg shadow-lg`}
-                            />
-                          </div>
-                        )}
-                        {item.type === "subPdf" && subPdfImages[item.pdfId] && (
-                          <div className="relative">
-                            <TooltipProvider>
-                              <div className="absolute z-10 opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => moveItemUp(index)}
-                                      disabled={index === 0}
-                                    >
-                                      <ArrowLeft size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Down order</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                                      variant="destructive"
-                                      size="sm"
-                                      onClick={() =>
-                                        removeMergeOrder(
-                                          item.type,
-                                          item.pdfId,
-                                          item.order
-                                        )
-                                      }
-                                    >
-                                      <Trash2 size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    Remove from order
-                                  </TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <Button
-                                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-black border"
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => moveItemDown(index)}
-                                      disabled={index === mergeOrder.length - 1}
-                                    >
-                                      <ArrowRight size={20} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Up order</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </TooltipProvider>
-                            <img
-                              className={`${
-                                subPdfImages[item.pdfId][0] !==
-                                subPdfImages[item.pdfId][1]
-                                  ? "absolute"
-                                  : " "
-                              } h-auto w-auto object-contain max-w-48 max-h-64 border-2 border-gray-300 rounded-lg shadow-lg`}
-                              src={subPdfImages[item.pdfId][0]}
-                              alt="First Page"
-                            />
-                            {subPdfImages[item.pdfId][0] !==
-                              subPdfImages[item.pdfId][1] && (
-                              <img
-                                className="h-auto w-auto object-contain max-w-48 max-h-64 border-2 border-gray-300
-                                 rounded-lg shadow-lg ml-4 mt-2"
-                                src={subPdfImages[item.pdfId][1]}
-                                alt="Last Page"
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-row mt-4 gap-4">
-                      <p>{getPageNumberAndType(item.pdfId, item.type)}</p>
-                      <p className="text-sm font-normal">
-                        ({item.type === "pdf" ? "Full PDF" : "Split Pages"})
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
+                    </motion.li>
+                  );
+                })}
+              </AnimatePresence>
             </ul>
           </Card>
           <Button disabled={mergeOrder.length === 0} onClick={handleMerge}>

@@ -437,23 +437,34 @@ export const PdfProvider = ({ children }: PdfProviderProps) => {
     },
     [fetchAndUpdateMergeOrder]
   );
-
   const updateMergeOrder = useCallback(
-    async (newMergeOrder: MergeOrderItem[]) => {
+    async (newOrder: MergeOrderItem[] | ((prevOrder: MergeOrderItem[]) => MergeOrderItem[])) => {
       setIsLoading(true);
       try {
+        let updatedOrder: MergeOrderItem[];
+        
+        if (typeof newOrder === 'function') {
+          updatedOrder = newOrder(mergeOrder);
+        } else {
+          updatedOrder = newOrder;
+        }
+  
+        // Update the order property for each item
+        updatedOrder = updatedOrder.map((item, index) => ({ ...item, order: index }));
+  
         await db.transaction("rw", db.mergeOrders, async () => {
           await db.mergeOrders.clear();
-          await db.mergeOrders.bulkAdd(newMergeOrder);
+          await db.mergeOrders.bulkAdd(updatedOrder);
         });
-        setMergeOrder(newMergeOrder);
+  
+        setMergeOrder(updatedOrder);
       } catch (error) {
         console.error("Error updating merge order:", error);
       } finally {
         setIsLoading(false);
       }
     },
-    []
+    [mergeOrder]
   );
 
   const removeMergeOrder = useCallback(

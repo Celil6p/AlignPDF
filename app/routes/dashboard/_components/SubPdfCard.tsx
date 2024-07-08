@@ -1,5 +1,5 @@
-import { Combine, Loader2, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Combine, Loader2, Trash2, Check } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardFooter } from "~/components/ui/card";
 import { db } from "~/contexts/db";
@@ -13,6 +13,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import RemovePdfDialog from "./RemovePdfDialog";
+import AddToMergeOrderButton from "./AddToMergeOrderButton";
 
 type SubPdfCardProps = {
   parentFile: PdfFile;
@@ -24,8 +26,9 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     "public/placeholder-pdf-image.png",
     "public/placeholder-pdf-image.png",
   ]);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // State to track loading status
-  const { addPdfToMergeOrder, removeSubPdf } = usePdf();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mergeCount, setMergeCount] = useState(0);
+  const { addPdfToMergeOrder, removeSubPdf, mergeOrder } = usePdf();
 
   useEffect(() => {
     const fetchSubPages = async () => {
@@ -69,17 +72,10 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     fetchSubPages();
   }, [subFile, parentFile]);
   
-  const rearrangePages = async (
-    subFileId: number,
-    newRange: [number, number]
-  ) => {
-    try {
-      await db.subFiles.update(subFileId, { range: newRange });
-    } catch (error) {
-      console.error("Error rearranging pages in sub PDF file:", error);
-    }
-  };
-
+  useEffect(() => {
+    const count = mergeOrder.filter(item => item.pdfId === subFile.id && item.type === "subPdf").length;
+    setMergeCount(count);
+  }, [mergeOrder, subFile.id]);
 
   const handleAddToMergeOrder = () => {
     addPdfToMergeOrder("subPdf", subFile.id as number);
@@ -99,68 +95,62 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
 
   return (
     <Card className="flex flex-col-1 sm:flex-col-2 md:flex-col-3 lg:flex-col-4 xl:flex-col-5 items-center justify-center transition-all duration-500 h-[380px] min-w-56 border-none bg-">
-      <div
-        className="flex items-center justify-center flex-col h-full"
-      >
+      <div className="flex items-center justify-center flex-col h-full">
         <CardContent className="relative flex justify-center">
-        {isLoading ? (
-          <div>
-            <Loader2
-              className={`animate-spin ${
-                loaderColors[(parentFile.id as number) % 8]
-              }`}
-              size={40}
-              strokeWidth={2.25}
-            />
-          </div>
-        ) : subPagesImageUrl ? (
-          <div className="relative">
-            <img
-              className={`h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ${
-                subPagesImageUrl[0] !== subPagesImageUrl[1] ? "absolute" : ""
-              }`}
-              src={subPagesImageUrl[0]}
-              alt="PDF First Page"
-            />
-            {subPagesImageUrl[0] !== subPagesImageUrl[1] && (
-              <img
-                className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ml-4 mt-2"
-                src={subPagesImageUrl[1]}
-                alt="PDF Last Page"
+          {isLoading ? (
+            <div>
+              <Loader2
+                className={`animate-spin ${
+                  loaderColors[(parentFile.id as number) % 8]
+                }`}
+                size={40}
+                strokeWidth={2.25}
               />
-            )}
-          </div>
-        ) : (
-          <span>No image available</span>
-        )}
+            </div>
+          ) : subPagesImageUrl ? (
+            <div className="relative">
+              <img
+                className={`h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ${
+                  subPagesImageUrl[0] !== subPagesImageUrl[1] ? "absolute" : ""
+                }`}
+                src={subPagesImageUrl[0]}
+                alt="PDF First Page"
+              />
+              {subPagesImageUrl[0] !== subPagesImageUrl[1] && (
+                <img
+                  className="h-auto w-auto overflow-clip max-w-40 border-2 rounded-lg ml-4 mt-2"
+                  src={subPagesImageUrl[1]}
+                  alt="PDF Last Page"
+                />
+              )}
+              {mergeCount > 0 && (
+                <div 
+                  className={`absolute -top-4 -right-4 z-10 rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold ${
+                    mergeCount === 1 ? 'bg-green-500' : 'bg-yellow-500'
+                  } text-white shadow-lg`}
+                >
+                  {mergeCount === 1 ? <Check size={24} /> : mergeCount}
+                </div>
+              )}
+            </div>
+          ) : (
+            <span>No image available</span>
+          )}
 
           <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger>
-            <Button
-              className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-              onClick={handleAddToMergeOrder}
-            >
-              <Combine size={20} />
-            </Button>
-            </TooltipTrigger>
-            <TooltipContent>Add Merge Order</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-            <TooltipTrigger>
-            <Button
-              variant={"destructive"}
-              className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-              onClick={() =>
-                removeSubPdf(subFile.id as number, parentFile.id as number)
-              }
-            >
-              <Trash2 size={20} />
-            </Button>
-            </TooltipTrigger>
-            <TooltipContent>Remove pdf</TooltipContent>
-            </Tooltip>
+                <AddToMergeOrderButton fileId={subFile.id as number} type="subPdf" />
+                </TooltipTrigger>
+                <TooltipContent>Add to Merge Order</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger>
+                <RemovePdfDialog fileId={subFile.id as number} type="subPdf" parentId={parentFile.id as number} />
+                </TooltipTrigger>
+                <TooltipContent>Remove Sub PDF</TooltipContent>
+              </Tooltip>
             </TooltipProvider>
           </div>
         </CardContent>

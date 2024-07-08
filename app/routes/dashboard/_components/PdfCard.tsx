@@ -18,9 +18,11 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 
-import { Combine, Loader2, SplitSquareHorizontal, Trash2 } from "lucide-react";
+import { Check, Loader2, SplitSquareHorizontal, Trash2 } from "lucide-react";
 import SubPdfCard from "./SubPdfCard";
 import SplitDialog from "./SplitDialog";
+import AddToMergeOrderButton from "./AddToMergeOrderButton";
+import RemovePdfDialog from "./RemovePdfDialog";
 
 interface PdfCardProps {
   fileName: string;
@@ -28,7 +30,16 @@ interface PdfCardProps {
 }
 
 const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
-  const { addPdfToMergeOrder, removePdf, getFirstPage } = usePdf();
+  const { addPdfToMergeOrder, getFirstPage } = usePdf();
+  const { mergeOrder } = usePdf();
+  const [mergeCount, setMergeCount] = useState(0);
+
+  useEffect(() => {
+    const count = mergeOrder.filter(
+      (item) => item.pdfId === file.id && item.type === "pdf"
+    ).length;
+    setMergeCount(count);
+  }, [mergeOrder, file.id]);
 
   // Get first page of main pdf file
   /**************************************************************************************************** */
@@ -117,19 +128,16 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
         file.subFiles.length > 0
           ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           : ""
-      } items-start justify-start w-full h-full bg-  ${
+      } items-start justify-start w-full h-full ${
         pdfBgColors[(file.id as number) % 8]
       } rounded-md`}
     >
-      {/* Main Pdf background colors selected via id numbers on top line*/}
-      <Card className="flex flex-col items-center transition-all duration-500 h-[380px] min-w-56 border-none bg-">
+      <Card className="flex flex-col items-center transition-all duration-500 h-[380px] min-w-56 border-none bg-transparent">
         <CardHeader className="flex flex-row justify-between items-center h-10 w-full text-sm font-medium text-gray-900 truncate">
           <p className="truncate w-full">{fileName}</p>
         </CardHeader>
-        <CardContent
-          className={`relative flex items-center justify-center flex-col h-full transition-all duration-500`}
-        >
-          {/* Main Pdf border colors selected via id numbers*/}
+
+        <CardContent className="relative flex items-center justify-center flex-col h-full transition-all duration-500">
           <div className="relative flex justify-center">
             {isLoading ? (
               <Loader2
@@ -140,30 +148,40 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
                 strokeWidth={2.25}
               />
             ) : firstPageImageUrl ? (
-              <img
-                className={`h-auto w-auto overflow-clip max-w-48 max-h-64 border-4 ${
-                  pdfBorderColors[(file.id as number) % 8]
-                } rounded-lg`}
-                src={firstPageImageUrl}
-                alt="PDF First Page"
-              />
+              <div className="relative">
+                <img
+                  className={`h-auto w-auto overflow-clip max-w-48 max-h-64 border-4 ${
+                    pdfBorderColors[(file.id as number) % 8]
+                  } rounded-lg`}
+                  src={firstPageImageUrl}
+                  alt="PDF First Page"
+                />
+                {mergeCount > 0 && (
+                  <div
+                    className={`absolute -top-4 -right-4 z-10 rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold ${
+                      mergeCount === 1 ? "bg-green-500" : "bg-yellow-500"
+                    } text-white shadow-lg`}
+                  >
+                    {mergeCount === 1 ? <Check size={24} /> : mergeCount}
+                  </div>
+                )}
+              </div>
             ) : (
-              <span>No image available</span> // Displayed if there's no image URL
+              <span>No image available</span>
             )}
-            {/* Buttons */}
+
             <TooltipProvider>
               <div className="absolute opacity-80 sm:opacity-0 flex space-x-2 justify-center items-center w-full h-full bg-opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-90 hover:opacity-100">
                 <Tooltip>
                   <TooltipTrigger>
-                    <Button
-                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                      onClick={handleAddToMergeOrder}
-                    >
-                      <Combine size={20} />
-                    </Button>
+                    <AddToMergeOrderButton
+                      fileId={file.id as number}
+                      type="pdf"
+                    />
                   </TooltipTrigger>
-                  <TooltipContent>Add Merge Order</TooltipContent>
+                  <TooltipContent>Add to Merge Order</TooltipContent>
                 </Tooltip>
+
                 <Tooltip>
                   <TooltipTrigger>
                     <SplitDialog rangeMin={1} rangeMax={file.pages} file={file}>
@@ -174,15 +192,10 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
                   </TooltipTrigger>
                   <TooltipContent>Split Pdf</TooltipContent>
                 </Tooltip>
+
                 <Tooltip>
                   <TooltipTrigger>
-                    <Button
-                      variant={"destructive"}
-                      className="opacity-100 transition-transform duration-300 ease-in-out group-hover:scale-100 sm:hover:scale-110 border-white border"
-                      onClick={() => removePdf(file.id as number)}
-                    >
-                      <Trash2 size={20} />
-                    </Button>
+                    <RemovePdfDialog fileId={file.id as number} type="pdf" />
                   </TooltipTrigger>
                   <TooltipContent>Remove Pdf</TooltipContent>
                 </Tooltip>
@@ -190,11 +203,13 @@ const PdfCard: React.FC<PdfCardProps> = ({ fileName, file }) => {
             </TooltipProvider>
           </div>
         </CardContent>
+
         <CardFooter className="flex flex-row justify-between space-x-10 items-center">
           <p>{readableSize}</p>
           <p>{`${file.pages > 1 ? file.pages + " Pages" : "Single Page"}`}</p>
         </CardFooter>
       </Card>
+
       {file.subFiles.map((subFile) => (
         <SubPdfCard key={subFile.id} subFile={subFile} parentFile={file} />
       ))}

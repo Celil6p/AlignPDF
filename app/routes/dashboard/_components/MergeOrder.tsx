@@ -12,6 +12,7 @@ import {
 } from "~/components/ui/tooltip";
 import { MergeOrderItem } from "~/contexts/types/pdf";
 import { motion, AnimatePresence } from "framer-motion";
+import MergeDialog from "./MergeDialog";
 
 
 const MergeOrderList = () => {
@@ -375,9 +376,7 @@ const MergeOrderList = () => {
               </AnimatePresence>
             </ul>
           </Card>
-          <Button disabled={mergeOrder.length === 0} onClick={handleMerge}>
-            Merge
-          </Button>
+          <MergeDialog />
         </>
       ) : (
         <></>

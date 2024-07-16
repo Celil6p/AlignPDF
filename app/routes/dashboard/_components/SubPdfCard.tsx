@@ -77,10 +77,6 @@ const SubPdfCard = ({ subFile, parentFile }: SubPdfCardProps) => {
     setMergeCount(count);
   }, [mergeOrder, subFile.id]);
 
-  const handleAddToMergeOrder = () => {
-    addPdfToMergeOrder("subPdf", subFile.id as number);
-  };
-
   const loaderColors = [
     "text-red-700",
     "text-blue-700",
